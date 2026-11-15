@@ -16,12 +16,13 @@ val keyProps = Properties().apply {
 
 android {
     namespace = "dev.safro.encore"
-    compileSdk = flutter.compileSdkVersion
+    compileSdk = 37 // flutter_local_notifications needs 37+
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
+        isCoreLibraryDesugaringEnabled = true // needed by flutter_local_notifications
     }
 
     defaultConfig {
@@ -64,4 +65,8 @@ kotlin {
 
 flutter {
     source = "../.."
+}
+
+dependencies {
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
 }
