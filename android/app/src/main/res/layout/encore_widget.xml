@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_root"
+    android:layout_width="match_parent" android:layout_height="match_parent"
+    android:orientation="horizontal" android:gravity="center_vertical"
+    android:padding="8dp" android:background="@drawable/widget_background">
+    <ImageView android:id="@+id/widget_cover"
+        android:layout_width="56dp" android:layout_height="56dp"
+        android:scaleType="centerCrop" android:clipToOutline="true"
+        android:background="@drawable/widget_cover_background" android:contentDescription="Cover"/>
+    <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
+        android:orientation="vertical" android:paddingStart="12dp" android:paddingEnd="4dp">
+        <TextView android:id="@+id/widget_title" android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:textColor="#FFF1F0F7" android:textSize="15sp" android:textStyle="bold" android:maxLines="1" android:ellipsize="end"/>
+        <TextView android:id="@+id/widget_artist" android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:textColor="#FFC5C6D0" android:textSize="13sp" android:maxLines="1" android:ellipsize="end"/>
+    </LinearLayout>
+    <ImageButton android:id="@+id/widget_prev" android:layout_width="40dp" android:layout_height="40dp"
+        android:background="@android:color/transparent" android:src="@drawable/ic_widget_prev" android:contentDescription="Previous"/>
+    <ImageButton android:id="@+id/widget_play" android:layout_width="48dp" android:layout_height="48dp"
+        android:background="@drawable/widget_play_background" android:src="@drawable/ic_widget_play" android:contentDescription="Play or pause"/>
+    <ImageButton android:id="@+id/widget_next" android:layout_width="40dp" android:layout_height="40dp"
+        android:background="@android:color/transparent" android:src="@drawable/ic_widget_next" android:contentDescription="Next"/>
+</LinearLayout>
