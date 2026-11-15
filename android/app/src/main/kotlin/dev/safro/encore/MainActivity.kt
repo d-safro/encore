@@ -7,8 +7,11 @@ import android.media.AudioManager
 import android.media.MediaRouter
 import android.media.MediaRouter2
 import android.os.Build
+import android.net.Uri
 import android.provider.Settings
+import androidx.core.content.FileProvider
 import com.ryanheise.audioservice.AudioServiceActivity
+import java.io.File
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
 
@@ -16,6 +19,36 @@ import io.flutter.plugin.common.MethodChannel
 class MainActivity : AudioServiceActivity() {
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
+        // App updates and links: which APK fits this phone, permission to install, the installer, a browser.
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "encore/system").setMethodCallHandler { call, result ->
+            try {
+                when (call.method) {
+                    "abis" -> result.success(Build.SUPPORTED_ABIS.toList())
+                    "canInstall" -> result.success(Build.VERSION.SDK_INT < 26 || packageManager.canRequestPackageInstalls())
+                    "allowInstalls" -> {
+                        startActivity(Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, Uri.parse("package:$packageName"))
+                            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+                        result.success(true)
+                    }
+                    "install" -> {
+                        val file = File(call.argument<String>("path")!!)
+                        val uri = FileProvider.getUriForFile(this, "$packageName.updates", file)
+                        startActivity(Intent(Intent.ACTION_VIEW)
+                            .setDataAndType(uri, "application/vnd.android.package-archive")
+                            .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_ACTIVITY_NEW_TASK))
+                        result.success(true)
+                    }
+                    "openUrl" -> {
+                        startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(call.argument<String>("url")!!))
+                            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+                        result.success(true)
+                    }
+                    else -> result.notImplemented()
+                }
+            } catch (e: Exception) {
+                result.error("system", e.message, null)
+            }
+        }
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "encore/audio").setMethodCallHandler { call, result ->
             val am = getSystemService(Context.AUDIO_SERVICE) as AudioManager
             try {
