@@ -25,11 +25,10 @@ class MainActivity : AudioServiceActivity() {
             try {
                 when (call.method) {
                     "abis" -> result.success(Build.SUPPORTED_ABIS.toList())
-                    "icon" -> result.success(icons.firstOrNull { iconOn(it) } ?: icons.first())
-                    "setIcon" -> {   // the launcher icon: switch on the chosen one first, then the others off
-                        val want = call.argument<String>("name") ?: icons.first()
-                        setIcon(want, true)
-                        for (n in icons) if (n != want) setIcon(n, false)
+                    "icon" -> result.success(pendingIcon ?: icons.firstOrNull { iconOn(it) } ?: icons.first())
+                    "setIcon" -> {
+                        // applied when you leave the app: switching off the icon Encore was opened from ends its window
+                        pendingIcon = call.argument<String>("name") ?: icons.first()
                         result.success(true)
                     }
                     "multicastLock" -> {   // finding Cast speakers (mDNS) needs multicast packets
@@ -100,6 +99,16 @@ class MainActivity : AudioServiceActivity() {
     }
 
     private val icons = listOf("IconScript", "IconLine", "IconOriginal")
+    private var pendingIcon: String? = null
+
+    override fun onStop() {
+        super.onStop()
+        val want = pendingIcon ?: return
+        pendingIcon = null
+        if (iconOn(want)) return
+        setIcon(want, true)   // the chosen one on first, so there's always an icon
+        for (n in icons) if (n != want) setIcon(n, false)
+    }
 
     private fun iconOn(name: String): Boolean {
         val st = packageManager.getComponentEnabledSetting(android.content.ComponentName(packageName, "$packageName.$name"))
