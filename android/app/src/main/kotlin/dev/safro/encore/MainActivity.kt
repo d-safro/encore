@@ -17,6 +17,7 @@ import io.flutter.plugin.common.MethodChannel
 
 /** The player screen's sound panel: system media volume, where the sound plays, Android's output switcher. */
 class MainActivity : AudioServiceActivity() {
+    private var multicast: android.net.wifi.WifiManager.MulticastLock? = null
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
         // App updates and links: which APK fits this phone, permission to install, the installer, a browser.
@@ -24,6 +25,14 @@ class MainActivity : AudioServiceActivity() {
             try {
                 when (call.method) {
                     "abis" -> result.success(Build.SUPPORTED_ABIS.toList())
+                    "multicastLock" -> {   // finding Cast speakers (mDNS) needs multicast packets
+                        val wifi = applicationContext.getSystemService(Context.WIFI_SERVICE) as android.net.wifi.WifiManager
+                        if (call.argument<Boolean>("on") == true) {
+                            if (multicast == null) multicast = wifi.createMulticastLock("encore-cast").apply { setReferenceCounted(false) }
+                            multicast?.acquire()
+                        } else multicast?.release()
+                        result.success(true)
+                    }
                     "canInstall" -> result.success(Build.VERSION.SDK_INT < 26 || packageManager.canRequestPackageInstalls())
                     "allowInstalls" -> {
                         startActivity(Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, Uri.parse("package:$packageName"))
