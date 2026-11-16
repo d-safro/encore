@@ -25,6 +25,13 @@ class MainActivity : AudioServiceActivity() {
             try {
                 when (call.method) {
                     "abis" -> result.success(Build.SUPPORTED_ABIS.toList())
+                    "icon" -> result.success(icons.firstOrNull { iconOn(it) } ?: icons.first())
+                    "setIcon" -> {   // the launcher icon: switch on the chosen one first, then the others off
+                        val want = call.argument<String>("name") ?: icons.first()
+                        setIcon(want, true)
+                        for (n in icons) if (n != want) setIcon(n, false)
+                        result.success(true)
+                    }
                     "multicastLock" -> {   // finding Cast speakers (mDNS) needs multicast packets
                         val wifi = applicationContext.getSystemService(Context.WIFI_SERVICE) as android.net.wifi.WifiManager
                         if (call.argument<Boolean>("on") == true) {
@@ -91,6 +98,21 @@ class MainActivity : AudioServiceActivity() {
             }
         }
     }
+
+    private val icons = listOf("IconScript", "IconLine", "IconOriginal")
+
+    private fun iconOn(name: String): Boolean {
+        val st = packageManager.getComponentEnabledSetting(android.content.ComponentName(packageName, "$packageName.$name"))
+        return st == android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_ENABLED ||
+            (st == android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_DEFAULT && name == icons.first())
+    }
+
+    private fun setIcon(name: String, on: Boolean) = packageManager.setComponentEnabledSetting(
+        android.content.ComponentName(packageName, "$packageName.$name"),
+        if (on) android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_ENABLED
+        else android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
+        android.content.pm.PackageManager.DONT_KILL_APP,
+    )
 
     private fun currentOutput(am: AudioManager): Map<String, String> {
         @Suppress("DEPRECATION")

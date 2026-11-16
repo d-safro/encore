@@ -1,0 +1,9 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp" android:height="108dp" android:viewportWidth="108" android:viewportHeight="108">
+    <!-- the line style of icon packs like Arcticons: light strokes on dark slate -->
+    <path android:pathData="M30,54 a24,24 0 1,0 48,0 a24,24 0 1,0 -48,0 z" android:strokeColor="#FFD5E3FF" android:strokeWidth="2"/>
+    <path android:pathData="M38.5,42 A20,20 0 0,1 46,35.6" android:strokeColor="#FFD5E3FF" android:strokeWidth="1.4" android:strokeLineCap="round"/>
+    <path android:pathData="M69.5,66 A20,20 0 0,1 62,72.4" android:strokeColor="#FFD5E3FF" android:strokeWidth="1.4" android:strokeLineCap="round"/>
+    <path android:pathData="M38.5,54 a15.5,15.5 0 1,0 31,0 a15.5,15.5 0 1,0 -31,0 z" android:strokeColor="#FFD5E3FF" android:strokeWidth="1.6"/>
+    <path android:pathData="M44.51 58.55 C49.46 58.01 56.48 55.30 59.00 51.35 C60.80 48.47 59.00 45.67 55.76 45.86 C51.80 46.12 48.91 50.80 49.10 55.30 C49.27 59.80 52.52 62.33 56.30 62.15 C59.17 61.97 61.70 60.35 63.49 58.01" android:strokeColor="#FFD5E3FF" android:strokeWidth="2.2" android:strokeLineCap="round" android:strokeLineJoin="round"/>
+</vector>
