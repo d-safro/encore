@@ -14,7 +14,7 @@
 
     <application
         android:label="Encore"
-        android:name="${applicationName}"
+        android:name=".EncoreApplication"
         android:icon="@mipmap/ic_launcher"
         android:usesCleartextTraffic="true"
         android:enableOnBackInvokedCallback="true">
