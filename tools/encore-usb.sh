@@ -3,11 +3,13 @@
 #
 # Run it on the computer that runs your Navidrome server and leave it running. Whenever an Android phone
 # with USB debugging on is plugged in, it connects the phone's port 4533 to the server (adb reverse), and
-# Encore downloads through the cable: fast, no Wi-Fi or internet needed. Unplug any time; Encore carries on
+# Encore talks to the server through the cable: fast, no Wi-Fi, internet or VPN needed. Unplug any time; Encore carries on
 # over the network, from where it stopped.
 #
 #   tools/encore-usb.sh                 # Navidrome on this computer's port 4533
-#   tools/encore-usb.sh 127.0.0.1:4533  # or wherever this computer reaches it (host:port)
+#   tools/encore-usb.sh 127.0.0.1:4540  # or wherever this computer reaches it (host:port). Behind a proxy that
+#                                       # adds things to Navidrome (podcasts, extras), give the proxy's plain-http
+#                                       # address with the same routes, so those work through the cable too
 #
 # Needs adb (Android platform-tools: `sudo dnf install android-tools`, `sudo apt install adb`, or Android
 # Studio's SDK). Nothing is changed on the phone apart from that port forward, which ends when it's unplugged.
@@ -63,7 +65,7 @@ while true; do
       if ! "$adb" -s "$serial" reverse --list 2>/dev/null | grep -q "tcp:$PHONE_PORT tcp:$local_port"; then
         if "$adb" -s "$serial" reverse "tcp:$PHONE_PORT" "tcp:$local_port" >/dev/null; then
           name="$("$adb" -s "$serial" shell getprop ro.product.model 2>/dev/null | tr -d '\r')"
-          echo "encore-usb: ${name:-$serial} connected: Encore downloads through the cable now (Settings > Downloads)"
+          echo "encore-usb: ${name:-$serial} connected: Encore uses the cable now (Settings > Downloads)"
         fi
       fi
     fi

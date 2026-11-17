@@ -27,7 +27,7 @@ class UsbCard extends ConsumerWidget {
           subtitle: Text(
             dl.progress.isNotEmpty
                 ? '${nSongs(dl.progress.length)} coming through the cable'
-                : 'Downloads go through the cable: fast, no Wi-Fi needed',
+                : 'Everything goes through the cable: fast, no Wi-Fi or VPN needed',
           ),
           trailing: all
               ? null
@@ -59,8 +59,9 @@ class UsbCard extends ConsumerWidget {
             'Plug the phone into the computer that runs your server, and tap Allow when the phone asks.',
             'On that computer, run encore-usb (tools/encore-usb.sh in Encore\'s repository). It keeps the cable '
                 'connected to the server while it runs.',
-            'This card turns blue within a few seconds: tap Copy all, or download anything as usual. Downloads '
-                'go through the cable while it\'s plugged in, and carry on over the network when it isn\'t.',
+            'This card turns blue within a few seconds: tap Copy all, or download anything as usual. Everything '
+                '(browsing, playing, downloads) goes through the cable while it\'s plugged in, and over the network '
+                'when it isn\'t.',
           ].indexed)
             Padding(
               padding: const EdgeInsets.only(top: 8),
