@@ -39,6 +39,10 @@ class MainActivity : AudioServiceActivity() {
                         } else multicast?.release()
                         result.success(true)
                     }
+                    "downloading" -> {   // songs still to download (0: done): keeps the app running meanwhile
+                        DownloadService.update(applicationContext, call.argument<Int>("count") ?: 0)
+                        result.success(true)
+                    }
                     "canInstall" -> result.success(Build.VERSION.SDK_INT < 26 || packageManager.canRequestPackageInstalls())
                     "allowInstalls" -> {
                         startActivity(Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, Uri.parse("package:$packageName"))

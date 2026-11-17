@@ -69,6 +69,8 @@
                 <action android:name="android.intent.action.MEDIA_BUTTON" />
             </intent-filter>
         </receiver>
+        <!-- Keeps the app running while songs download in the background (a "Downloading" notification) -->
+        <service android:name=".DownloadService" android:foregroundServiceType="dataSync" android:exported="false" />
         <!-- Home-screen widget -->
         <receiver android:name=".EncoreWidget" android:exported="true" android:label="Encore">
             <intent-filter>
