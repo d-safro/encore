@@ -25,6 +25,7 @@ class MainActivity : AudioServiceActivity() {
             try {
                 when (call.method) {
                     "abis" -> result.success(Build.SUPPORTED_ABIS.toList())
+                    "model" -> result.success(Build.MODEL)   // this phone's name on your other devices
                     "icon" -> result.success(pendingIcon ?: icons.firstOrNull { iconOn(it) } ?: icons.first())
                     "setIcon" -> {
                         // applied when you leave the app: switching off the icon Encore was opened from ends its window
