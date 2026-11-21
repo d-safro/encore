@@ -85,6 +85,10 @@
             android:grantUriPermissions="true">
             <meta-data android:name="android.support.FILE_PROVIDER_PATHS" android:resource="@xml/update_paths" />
         </provider>
+        <!-- Covers kept with the downloads, shown to Android Auto (which can't open the app's own files) -->
+        <provider android:name=".CoverArtProvider"
+            android:authorities="${applicationId}.covers"
+            android:exported="true" />
         <meta-data android:name="com.google.android.gms.car.application"
             android:resource="@xml/automotive_app_desc"/>
 
