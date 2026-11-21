@@ -78,7 +78,8 @@ class MainActivity : AudioServiceActivity() {
                             .putExtra(android.provider.CalendarContract.EXTRA_EVENT_BEGIN_TIME, call.argument<Number>("begin")?.toLong())
                             .putExtra(android.provider.CalendarContract.EXTRA_EVENT_END_TIME, call.argument<Number>("end")?.toLong())
                             .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
-
+                        result.success(true)
+                    }
                     "micPermission" -> {
                         val p = android.Manifest.permission.RECORD_AUDIO
                         if (checkSelfPermission(p) == android.content.pm.PackageManager.PERMISSION_GRANTED) {
