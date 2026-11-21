@@ -17,6 +17,17 @@ import io.flutter.plugin.common.MethodChannel
 
 /** The player screen's sound panel: system media volume, where the sound plays, Android's output switcher. */
 class MainActivity : AudioServiceActivity() {
+    // "What's playing?": a short recording for song identification (your server, your library)
+    private var recorder: android.media.MediaRecorder? = null
+    private var micAnswer: MethodChannel.Result? = null
+
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == 4711) {
+            micAnswer?.success(grantResults.firstOrNull() == android.content.pm.PackageManager.PERMISSION_GRANTED)
+            micAnswer = null
+        }
+    }
     private var multicast: android.net.wifi.WifiManager.MulticastLock? = null
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
@@ -56,6 +67,37 @@ class MainActivity : AudioServiceActivity() {
                         startActivity(Intent(Intent.ACTION_VIEW)
                             .setDataAndType(uri, "application/vnd.android.package-archive")
                             .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_ACTIVITY_NEW_TASK))
+                        result.success(true)
+                    }
+                    "micPermission" -> {
+                        val p = android.Manifest.permission.RECORD_AUDIO
+                        if (checkSelfPermission(p) == android.content.pm.PackageManager.PERMISSION_GRANTED) {
+                            result.success(true)
+                        } else {
+                            micAnswer?.success(false)
+                            micAnswer = result
+                            requestPermissions(arrayOf(p), 4711)
+                        }
+                    }
+                    "recordStart" -> {
+                        recorder?.release()
+                        val r = if (Build.VERSION.SDK_INT >= 31) android.media.MediaRecorder(this) else @Suppress("DEPRECATION") android.media.MediaRecorder()
+                        r.setAudioSource(android.media.MediaRecorder.AudioSource.MIC)
+                        r.setOutputFormat(android.media.MediaRecorder.OutputFormat.MPEG_4)
+                        r.setAudioEncoder(android.media.MediaRecorder.AudioEncoder.AAC)
+                        r.setAudioChannels(1)
+                        r.setAudioSamplingRate(22050)
+                        r.setAudioEncodingBitRate(64000)
+                        r.setOutputFile(call.argument<String>("path")!!)
+                        r.prepare()
+                        r.start()
+                        recorder = r
+                        result.success(true)
+                    }
+                    "recordStop" -> {
+                        try { recorder?.stop() } catch (_: Exception) {}
+                        recorder?.release()
+                        recorder = null
                         result.success(true)
                     }
                     "openUrl" -> {
