@@ -58,6 +58,17 @@ class MainActivity : AudioServiceActivity() {
                             .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_ACTIVITY_NEW_TASK))
                         result.success(true)
                     }
+                    "addEvent" -> {   // a concert into your calendar: its "new event" screen, filled in (no permission)
+                        startActivity(Intent(Intent.ACTION_INSERT)
+                            .setData(android.provider.CalendarContract.Events.CONTENT_URI)
+                            .putExtra(android.provider.CalendarContract.Events.TITLE, call.argument<String>("title"))
+                            .putExtra(android.provider.CalendarContract.Events.EVENT_LOCATION, call.argument<String>("location"))
+                            .putExtra(android.provider.CalendarContract.Events.DESCRIPTION, call.argument<String>("description"))
+                            .putExtra(android.provider.CalendarContract.EXTRA_EVENT_BEGIN_TIME, call.argument<Number>("begin")?.toLong())
+                            .putExtra(android.provider.CalendarContract.EXTRA_EVENT_END_TIME, call.argument<Number>("end")?.toLong())
+                            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+                        result.success(true)
+                    }
                     "openUrl" -> {
                         startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(call.argument<String>("url")!!))
                             .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
