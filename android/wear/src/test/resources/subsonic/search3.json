@@ -1,0 +1,4 @@
+{"subsonic-response":{"status":"ok","version":"1.16.1",
+ "searchResult3":{"artist":[{"id":"ar-1","name":"Miles Davis"}],
+  "album":[{"id":"al-1","name":"Kind of Blue","artist":"Miles Davis"}],
+  "song":[{"id":"s-1","title":"So What","artist":"Miles Davis"}]}}}
