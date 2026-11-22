@@ -17,6 +17,9 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.compose.currentStateAsState
 import android.app.RemoteInput
 import androidx.navigation.NavHostController
 import androidx.wear.compose.navigation.SwipeDismissableNavHost
@@ -273,13 +276,18 @@ private fun WatchPlayerRoute(graph: Graph, player: PlayerConnection, volume: Vol
 @Composable
 private fun RemoteRoute(graph: Graph, go: (String) -> Unit) {
     val phone by graph.phone.state.collectAsState()
-    DisposableEffect(Unit) {
-        graph.phone.watch(true)
+    // updates from the phone only while this screen is in sight: not with the app in the background, nor
+    // in ambient mode (the screen barely redraws then)
+    val lifecycle by LocalLifecycleOwner.current.lifecycle.currentStateAsState()
+    val active = lifecycle.isAtLeast(Lifecycle.State.STARTED) && !LocalAmbient.current
+    DisposableEffect(active) {
+        graph.phone.watch(active)
         onDispose { graph.phone.watch(false) }
     }
     // the position counts on between updates from the phone
-    val now by produceState(System.currentTimeMillis()) {
-        while (true) { value = System.currentTimeMillis(); kotlinx.coroutines.delay(500) }
+    val now by produceState(System.currentTimeMillis(), active) {
+        value = System.currentTimeMillis()
+        while (active) { kotlinx.coroutines.delay(500); value = System.currentTimeMillis() }
     }
     val n = phone.nowPlaying
     val link = graph.phone
