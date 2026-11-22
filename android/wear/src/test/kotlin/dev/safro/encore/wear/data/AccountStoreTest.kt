@@ -30,6 +30,17 @@ class AccountStoreTest {
         assertEquals(s.current, AccountStore(prefs).current)
     }
 
+    @Test fun signsOutWithThePhoneUnlessTypedHere() {
+        val s = AccountStore(prefs)
+        s.offerFromPhone(phone)
+        assertTrue(s.phoneSignedOut())
+        assertNull(s.current)
+        assertNull(prefs.getString("pass", null))
+        s.save(Account("https://watch.example.com", "bob", "pw2"))
+        assertFalse(s.phoneSignedOut())
+        assertEquals("bob", s.current!!.user)
+    }
+
     @Test fun followsThePhoneButKeepsOneTypedOnTheWatch() {
         val s = AccountStore(prefs)
         s.offerFromPhone(phone)

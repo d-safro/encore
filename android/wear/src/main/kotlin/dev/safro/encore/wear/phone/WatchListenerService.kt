@@ -9,12 +9,18 @@ import dev.safro.encore.wear.Graph
 import dev.safro.encore.wearlink.Paths
 import dev.safro.encore.wearlink.Wire
 
-/** What the phone sends the watch: its sign-in (DataItem), and now-playing state and covers (messages). */
+/** What the phone sends the watch: its sign-in (DataItem; deleted when it signs out), and now-playing state and covers (messages). */
 class WatchListenerService : WearableListenerService() {
     override fun onDataChanged(events: DataEventBuffer) {
         val g = Graph.get(this)
         for (e in events) {
-            if (e.type != DataEvent.TYPE_CHANGED || e.dataItem.uri.path != Paths.ACCOUNT) continue
+            if (e.dataItem.uri.path != Paths.ACCOUNT) continue
+            // the phone signed out (WearAccount.signedOut deletes the item)
+            if (e.type == DataEvent.TYPE_DELETED) {
+                g.accounts.phoneSignedOut()
+                continue
+            }
+            if (e.type != DataEvent.TYPE_CHANGED) continue
             val info = Wire.decodeAccount(DataMapItem.fromDataItem(e.dataItem).dataMap.getString(Paths.ACCOUNT_KEY)) ?: continue
             g.accounts.offerFromPhone(info)
         }
