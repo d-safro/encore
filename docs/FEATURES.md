@@ -67,7 +67,7 @@ as the server; with plain Navidrome they just don't appear.
   to share, or to save on the desktop.
 - Translate lyrics (a chip over the words): a muted second line under each line, in your phone's language or
   the one in Settings; Romanize for Japanese, Korean, Chinese, Cyrillic and other alphabets. Done by your server's
-  own AI (music-lookup + Ollama, only while AI is on), cached per song: nothing leaves home.
+  own AI (Conductor with Ollama, only while its AI is on), cached per song: nothing leaves home.
 - Audiobooks (sign in to Audiobookshelf under Settings › Audiobooks; an Audiobooks tab appears): Continue
   listening, every book, chapters; played by Encore's own player (speed, sleep timer, lock screen) with your place
   kept on Audiobookshelf, so its apps carry on from there. "Download for offline" keeps a book on the device
@@ -84,7 +84,7 @@ as the server; with plain Navidrome they just don't appear.
 - A Podcasts tab: follow shows (search Apple's podcast directory or paste a feed), see new episodes on Home,
   resume where you stopped (kept on the server, so it carries over to other apps), mark played, show notes,
   download episodes to the phone (or save them on the server). A notification when a show you follow has a new
-  episode (checked about hourly). Needs Conductor (music-lookup's podcast support).
+  episode (checked about hourly). Needs Conductor.
 
 **Jam (like Spotify Jam)**
 - Start a Jam and share the link or QR code: friends search your library (and songs you don't have, which
