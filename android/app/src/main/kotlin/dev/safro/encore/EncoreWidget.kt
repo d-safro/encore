@@ -20,9 +20,7 @@ class EncoreWidget : HomeWidgetProvider() {
             v.setTextViewText(R.id.widget_title, widgetData.getString("title", null) ?: "Encore")
             v.setTextViewText(R.id.widget_artist, widgetData.getString("artist", null) ?: "Tap to open")
             val cover = widgetData.getString("cover", null)
-            val bmp = if (cover != null && File(cover).exists()) {
-                BitmapFactory.decodeFile(cover, BitmapFactory.Options().apply { inSampleSize = 1 })
-            } else null
+            val bmp = if (cover != null && File(cover).exists()) coverBitmap(cover) else null
             if (bmp != null) v.setImageViewBitmap(R.id.widget_cover, bmp) else v.setImageViewResource(R.id.widget_cover, R.drawable.ic_widget_note)
             val playing = widgetData.getBoolean("playing", false)
             v.setImageViewResource(R.id.widget_play, if (playing) R.drawable.ic_widget_pause else R.drawable.ic_widget_play)
@@ -34,6 +32,19 @@ class EncoreWidget : HomeWidgetProvider() {
                 PendingIntent.getActivity(context, 0, open, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT))
             appWidgetManager.updateAppWidget(id, v)
         }
+    }
+
+    /**
+     * The cover, scaled down to at most ~512 px. A widget's pictures must fit in a few screens' worth of memory,
+     * and an audiobook's cover straight from Audiobookshelf can be thousands of pixels across: at full size the
+     * update throws (and takes the app down with it).
+     */
+    private fun coverBitmap(path: String): android.graphics.Bitmap? {
+        val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+        BitmapFactory.decodeFile(path, bounds)
+        var sample = 1
+        while (maxOf(bounds.outWidth, bounds.outHeight) / sample > 512) sample *= 2
+        return BitmapFactory.decodeFile(path, BitmapFactory.Options().apply { inSampleSize = sample })
     }
 
     /** A media-button press delivered to the player's receiver (works even when the app isn't open). */
