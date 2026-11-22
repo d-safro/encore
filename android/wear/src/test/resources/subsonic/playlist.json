@@ -1,0 +1,6 @@
+{"subsonic-response":{"status":"ok","version":"1.16.1",
+ "playlist":{"id":"pl-1","name":"Running","songCount":2,"entry":[
+   {"id":"s-9","title":"Run","artist":"Someone","duration":200},
+   {"id":"","title":"broken entry"},
+   {"id":"s-10","title":"Faster","artist":"Someone Else","duration":180}
+ ]}}}
