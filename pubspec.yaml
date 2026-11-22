@@ -1,5 +1,5 @@
 name: encore
-description: "Encore: a music player for Navidrome / Subsonic"
+description: "Encore for Android: a music player for Navidrome / Subsonic"
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
@@ -30,6 +30,11 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  # the code shared with the other Encore app (local work: pubspec_overrides.yaml, see README)
+  encore_core:
+    git:
+      url: https://github.com/d-safro/encore-core.git
+      ref: v1.0.0
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
@@ -61,22 +66,10 @@ dependencies:
   flutter_local_notifications: ^23.0.2
   workmanager: ^0.10.10
   multicast_dns: ^0.3.3+1
-  just_audio_mpv:
-    path: packages/just_audio_mpv
-  media_kit_libs_linux: ^1.2.1
-  media_kit_libs_windows_audio: ^1.0.9
-  audio_service_mpris: ^1.0.0-beta.4
-  audio_service_smtc:
-    path: packages/audio_service_smtc
-  sqflite_common_ffi: ^2.4.7
-  tray_manager: ^0.5.2
-  window_manager: ^0.5.1
   image_picker: ^1.2.4
   file_picker: ^13.4.0
   image: ^4.13.1
-  logging: ^1.3.0
   audio_metadata_reader: ^1.8.1
-  desktop_drop: ^0.8.0
 dev_dependencies:
   flutter_test:
     sdk: flutter
