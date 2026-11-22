@@ -102,7 +102,10 @@ class PlaybackService : MediaSessionService() {
 
         override fun onPlaybackStateChanged(playbackState: Int) {
             if (playbackState == Player.STATE_READY) tally.durationKnown(player.duration)
+            holdNetwork(player) // buffering wants it; the queue's end or an error lets it go
         }
+
+        override fun onPlayWhenReadyChanged(playWhenReady: Boolean, reason: Int) = holdNetwork(player)
 
         override fun onPlaybackSuppressionReasonChanged(reason: Int) {
             // asked to play with no headphones connected: the output switcher, to pick some
@@ -115,7 +118,8 @@ class PlaybackService : MediaSessionService() {
     /** While streaming, ask for Wi-Fi or LTE (the Bluetooth link to the phone is too slow for music). */
     private fun holdNetwork(player: Player) {
         val id = player.currentMediaItem?.mediaId
-        val want = player.playWhenReady && id != null && !resolver.isDownloaded(id)
+        val want = wantsNetwork(player.playWhenReady, player.playbackState, player.playerError != null) &&
+            id != null && !resolver.isDownloaded(id)
         if (want == holdingNetwork) return
         holdingNetwork = want
         if (want) graph.networks.acquire() else graph.networks.release()
@@ -152,7 +156,8 @@ class PlaybackService : MediaSessionService() {
 
     override fun onTaskRemoved(rootIntent: Intent?) {
         val p = session?.player
-        if (p == null || !p.playWhenReady || p.mediaItemCount == 0) stopSelf()
+        // kept only while it plays (or is about to): not at the queue's end or after an error
+        if (p == null || p.mediaItemCount == 0 || !wantsNetwork(p.playWhenReady, p.playbackState, p.playerError != null)) stopSelf()
     }
 
     override fun onDestroy() {
@@ -178,6 +183,10 @@ class PlaybackService : MediaSessionService() {
         )
     }
 }
+
+/** Playing or about to: playWhenReady stays true at the queue's end and after an error, so not just that. */
+internal fun wantsNetwork(playWhenReady: Boolean, state: Int, failed: Boolean) =
+    playWhenReady && !failed && state != Player.STATE_ENDED && state != Player.STATE_IDLE
 
 /** Media3's notification, made a Wear OS ongoing activity (the Encore icon on the watch face while playing). */
 private class OngoingNotificationProvider(private val context: Context) : DefaultMediaNotificationProvider(context) {
