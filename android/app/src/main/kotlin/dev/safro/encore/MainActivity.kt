@@ -131,6 +131,41 @@ class MainActivity : AudioServiceActivity() {
             r.release()
         }
     }
+    /** For reading a music file's lyrics: its own path when Encore may open it (Android 11+ lets it, for the music
+     *  it may see), else a copy in the cache; and the text of the .lrc beside it when that can be read. */
+    private fun audioFile(uri: Uri): Map<String, Any?> {
+        var path: String? = null
+        try {
+            @Suppress("DEPRECATION")
+            contentResolver.query(uri, arrayOf(android.provider.MediaStore.MediaColumns.DATA), null, null, null)?.use { c ->
+                if (c.moveToFirst()) path = c.getString(0)
+            }
+        } catch (_: Exception) {}
+        val lrc = path?.let { p ->
+            try {
+                val f = File(p.substringBeforeLast('.') + ".lrc")
+                if (f.canRead() && f.length() < 512 * 1024) f.readText() else null
+            } catch (_: Exception) { null }
+        }
+        val own = path?.let { File(it) }?.takeIf { it.canRead() }
+        if (own != null) return mapOf("path" to own.path, "lrc" to lrc, "temporary" to false)
+        val copy = File(cacheDir, "lyrics-${System.nanoTime()}")
+        contentResolver.openInputStream(uri)?.use { input ->
+            copy.outputStream().use { out ->
+                val buf = ByteArray(64 * 1024)
+                var total = 0L
+                while (true) {
+                    val n = input.read(buf)
+                    if (n < 0) break
+                    out.write(buf, 0, n)
+                    total += n
+                    if (total > 300L * 1024 * 1024) break   // tags are at the start (an M4A's may be at the end of a smaller file)
+                }
+            }
+        } ?: return emptyMap()
+        return mapOf("path" to copy.path, "lrc" to lrc, "temporary" to true)
+    }
+
     private var multicast: android.net.wifi.WifiManager.MulticastLock? = null
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
@@ -180,6 +215,17 @@ class MainActivity : AudioServiceActivity() {
                                 runOnUiThread { result.success(tags) }
                             } catch (e: Exception) {
                                 runOnUiThread { result.error("probe", e.message, null) }
+                            }
+                        }.start()
+                    }
+                    "audioFile" -> {   // copying can take a moment: off the main thread
+                        val uri = Uri.parse(call.argument<String>("uri")!!)
+                        Thread {
+                            try {
+                                val r = audioFile(uri)
+                                runOnUiThread { result.success(r) }
+                            } catch (e: Exception) {
+                                runOnUiThread { result.error("audioFile", e.message, null) }
                             }
                         }.start()
                     }
