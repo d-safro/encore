@@ -70,4 +70,9 @@ flutter {
 dependencies {
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
     implementation("androidx.work:work-runtime-ktx:2.11.0") // EncoreApplication: calls off old download jobs
+    // The Wear OS app (android/wear): its remote reaches the phone's player through the Data Layer
+    implementation(project(":wearlink"))
+    implementation("com.google.android.gms:play-services-wearable:19.0.0")
+    implementation("androidx.media:media:1.7.1")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.2")
 }

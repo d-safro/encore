@@ -270,6 +270,25 @@ class MainActivity : AudioServiceActivity() {
                 result.error("system", e.message, null)
             }
         }
+        // A paired Wear OS watch signs in to the same server (data/wear_link.dart)
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "encore/wear").setMethodCallHandler { call, result ->
+            try {
+                when (call.method) {
+                    "account" -> WearAccount.share(
+                        applicationContext,
+                        call.argument<String>("server") ?: "",
+                        call.argument<String>("user") ?: "",
+                        call.argument<String>("pass") ?: "",
+                        call.argument<String>("localAddress") ?: "",
+                    )
+                    "signedOut" -> WearAccount.signedOut(applicationContext)
+                    else -> return@setMethodCallHandler result.notImplemented()
+                }
+                result.success(true)
+            } catch (e: Exception) {
+                result.error("wear", e.message, null)   // no Google Play services: no watch to tell
+            }
+        }
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "encore/audio").setMethodCallHandler { call, result ->
             val am = getSystemService(Context.AUDIO_SERVICE) as AudioManager
             try {

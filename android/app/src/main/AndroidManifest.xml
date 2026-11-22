@@ -102,6 +102,13 @@
         <provider android:name=".CoverArtProvider"
             android:authorities="${applicationId}.covers"
             android:exported="true" />
+        <!-- Encore on a paired Wear OS watch: its remote (play, skip, heart, queue, library) -->
+        <service android:name=".WearRemoteService" android:exported="true">
+            <intent-filter>
+                <action android:name="com.google.android.gms.wearable.REQUEST_RECEIVED" />
+                <data android:scheme="wear" android:host="*" android:pathPrefix="/encore/remote" />
+            </intent-filter>
+        </service>
         <meta-data android:name="com.google.android.gms.car.application"
             android:resource="@xml/automotive_app_desc"/>
 
