@@ -34,7 +34,7 @@ class MainActivity : ComponentActivity() {
         val volume = Volume(this)
         lifecycle.addObserver(ambientObserver)
         handle(intent)
-        setContent { WearApp(graph, player, volume, ambient, open) }
+        setContent { WearApp(graph, player, volume, ambient, open) { open = null } }
     }
 
     override fun onNewIntent(intent: Intent) {

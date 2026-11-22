@@ -74,7 +74,7 @@ object TileLayout {
                     bottomSlot = {
                         textEdgeButton(
                             onClick = open(context, if (info.onPhone) MainActivity.OPEN_REMOTE else target),
-                            labelContent = { text((if (info.onPhone) "Open" else if (info.playing) "Pause" else "Play").layoutString) },
+                            labelContent = { text((if (info.onPhone) "Open" else if (info.playing) "Pause" else "Play").layoutString, color = colorScheme.onPrimary) },
                         )
                     },
                     onClick = open(context, if (info.onPhone) MainActivity.OPEN_REMOTE else MainActivity.OPEN_PLAYER),
@@ -92,7 +92,7 @@ object TileLayout {
                     bottomSlot = {
                         textEdgeButton(
                             onClick = open(context, MainActivity.OPEN_TILE_PLAYLIST),
-                            labelContent = { text((if (playlist.isEmpty()) "Choose" else "Shuffle").layoutString) },
+                            labelContent = { text((if (playlist.isEmpty()) "Choose" else "Shuffle").layoutString, color = colorScheme.onPrimary) },
                         )
                     },
                 )

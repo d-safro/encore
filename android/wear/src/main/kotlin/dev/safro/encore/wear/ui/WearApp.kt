@@ -43,7 +43,7 @@ import kotlinx.coroutines.launch
 
 /** The app: every screen, wired to the watch's player, the server and the phone. */
 @Composable
-fun WearApp(graph: Graph, player: PlayerConnection, volume: Volume, ambient: Boolean, openOnStart: String?) {
+fun WearApp(graph: Graph, player: PlayerConnection, volume: Volume, ambient: Boolean, openOnStart: String?, onOpened: () -> Unit = {}) {
     val nav = rememberSwipeDismissableNavController()
     val account by graph.accounts.account.collectAsState()
     EncoreTheme(ambient) {
@@ -115,11 +115,14 @@ fun WearApp(graph: Graph, player: PlayerConnection, volume: Volume, ambient: Boo
     }
     LaunchedEffect(account) {
         if (account == null && nav.currentDestination?.route != Routes.SIGN_IN) {
-            nav.navigate(Routes.SIGN_IN) { popUpTo(0) }
+            nav.navigate(Routes.SIGN_IN) { popUpTo(0); launchSingleTop = true }
         }
     }
     LaunchedEffect(openOnStart, account) {
-        if (account != null && openOnStart != null) nav.navigate(openOnStart)
+        if (account != null && openOnStart != null) {
+            if (nav.currentDestination?.route != openOnStart) nav.navigate(openOnStart) { launchSingleTop = true }
+            onOpened()
+        }
     }
 }
 

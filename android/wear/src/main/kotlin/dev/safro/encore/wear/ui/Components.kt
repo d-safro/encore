@@ -59,12 +59,15 @@ fun ListScreen(
     edgeButton: (@Composable androidx.compose.foundation.layout.BoxScope.() -> Unit)? = null,
     content: ScalingLazyListScope.() -> Unit,
 ) {
-    val state = rememberScalingLazyListState(initialCenterItemIndex = 0)
+    val state = rememberScalingLazyListState()
     val list: @Composable androidx.compose.foundation.layout.BoxScope.(androidx.compose.foundation.layout.PaddingValues) -> Unit = { padding ->
         ScalingLazyColumn(
             modifier = Modifier.fillMaxSize(),
             state = state,
             contentPadding = padding,
+            // lists start at the top, under the time (centering the second item pushed the first one into
+            // the time on small square screens)
+            autoCentering = null,
         ) {
             if (title != null) item { ListHeader { Text(title, maxLines = 2, textAlign = TextAlign.Center) } }
             content()

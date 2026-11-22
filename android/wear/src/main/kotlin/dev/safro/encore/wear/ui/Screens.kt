@@ -117,9 +117,7 @@ fun SongsScreen(
         }) else null,
     ) {
         item {
-            Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
-                if (coverArt != null) Cover(coverArt, 56.dp)
-                Spacer(Modifier.height(4.dp))
+            Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp)) {
                 Text(title, style = MaterialTheme.typography.titleMedium, textAlign = TextAlign.Center, maxLines = 2, overflow = TextOverflow.Ellipsis)
                 if (!subtitle.isNullOrEmpty()) {
                     Text(subtitle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1)
@@ -129,6 +127,7 @@ fun SongsScreen(
         if (songs is Load.Ok && songs.value.isNotEmpty()) {
             item {
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                    if (coverArt != null) Cover(coverArt, 48.dp)
                     FilledTonalIconButton(onClick = { play(0, true) }) { Icon(Glyphs.Shuffle, contentDescription = "Shuffle") }
                     if (keep != null && onKeep != null) {
                         FilledTonalIconButton(onClick = onKeep) {

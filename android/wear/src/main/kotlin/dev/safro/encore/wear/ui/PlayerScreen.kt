@@ -47,6 +47,7 @@ import androidx.wear.compose.material3.IconButtonDefaults
 import androidx.wear.compose.material3.LevelIndicator
 import androidx.wear.compose.material3.LinearProgressIndicator
 import androidx.wear.compose.material3.MaterialTheme
+import androidx.wear.compose.material3.OutlinedIconButton
 import androidx.wear.compose.material3.ScreenScaffold
 import androidx.wear.compose.material3.Text
 import kotlinx.coroutines.delay
@@ -208,14 +209,7 @@ private fun Controls(ui: NowPlayingUi, actions: PlayerActions, ambient: Boolean)
         IconButton(onClick = actions.onPrevious, enabled = ui.hasPrevious && !ui.empty) {
             Icon(Glyphs.Previous, contentDescription = "Previous", modifier = Modifier.size(28.dp))
         }
-        val colors = if (ambient) IconButtonDefaults.outlinedIconButtonColors() else IconButtonDefaults.filledIconButtonColors()
-        FilledIconButton(
-            onClick = actions.onToggle,
-            enabled = !ui.empty,
-            colors = colors,
-            border = if (ambient) ButtonDefaults.outlinedButtonBorder(true) else null,
-            modifier = Modifier.size(IconButtonDefaults.LargeButtonSize),
-        ) {
+        val icon: @Composable () -> Unit = {
             if (ui.buffering && ui.playing) {
                 CircularProgressIndicator(modifier = Modifier.size(28.dp), strokeWidth = 3.dp)
             } else {
@@ -226,6 +220,10 @@ private fun Controls(ui: NowPlayingUi, actions: PlayerActions, ambient: Boolean)
                 )
             }
         }
+        val big = Modifier.size(IconButtonDefaults.LargeButtonSize)
+        // ambient: an outline only, so the screen stays almost all black
+        if (ambient) OutlinedIconButton(onClick = actions.onToggle, enabled = !ui.empty, modifier = big) { icon() }
+        else FilledIconButton(onClick = actions.onToggle, enabled = !ui.empty, modifier = big) { icon() }
         IconButton(onClick = actions.onNext, enabled = ui.hasNext && !ui.empty) {
             Icon(Glyphs.Next, contentDescription = "Next", modifier = Modifier.size(28.dp))
         }
@@ -260,15 +258,15 @@ private fun Extras(ui: NowPlayingUi, actions: PlayerActions) {
 @Composable
 private fun HeadphonesPrompt(onPick: () -> Unit) {
     Box(
-        Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.88f)),
+        Modifier.fillMaxSize().background(Color.Black),
         contentAlignment = Alignment.Center,
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.padding(28.dp)) {
             Icon(Glyphs.Headphones, contentDescription = null, modifier = Modifier.size(32.dp), tint = MaterialTheme.colorScheme.primary)
             Spacer(Modifier.height(6.dp))
-            Text("Connect headphones to listen", textAlign = TextAlign.Center, style = MaterialTheme.typography.titleSmall)
+            Text("Connect headphones to listen", textAlign = TextAlign.Center, style = MaterialTheme.typography.titleSmall, maxLines = 3)
             Spacer(Modifier.height(8.dp))
-            CompactButton(onClick = onPick, colors = ButtonDefaults.buttonColors(), label = { Text("Pick headphones") })
+            CompactButton(onClick = onPick, colors = ButtonDefaults.buttonColors(), label = { Text("Connect", maxLines = 1) })
         }
     }
 }

@@ -2,6 +2,7 @@ package dev.safro.encore.wear.ui
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.key
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 import androidx.wear.compose.material3.ColorScheme
@@ -55,7 +56,12 @@ val AmbientColors = ColorScheme(
 
 @Composable
 fun EncoreTheme(ambient: Boolean = false, content: @Composable () -> Unit) {
-    MaterialTheme(colorScheme = if (ambient) AmbientColors else EncoreColors) {
-        CompositionLocalProvider(LocalAmbient provides ambient, content = content)
+    // A fresh theme for each mode: Material keeps the component colours it worked out from the first scheme,
+    // so switching the scheme in place leaves filled buttons lit in ambient. (Navigation lives outside, so
+    // the screen you're on stays.)
+    key(ambient) {
+        MaterialTheme(colorScheme = if (ambient) AmbientColors else EncoreColors) {
+            CompositionLocalProvider(LocalAmbient provides ambient, content = content)
+        }
     }
 }

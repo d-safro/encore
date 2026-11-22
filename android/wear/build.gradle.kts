@@ -144,7 +144,7 @@ dependencies {
     testImplementation(composeBom)
     testImplementation("androidx.compose.ui:ui-test-junit4")
     testImplementation("androidx.test:core:1.7.0")
-    testImplementation("androidx.work:work-testing:2.11.2")
+    debugImplementation("androidx.wear.tiles:tiles-renderer:1.6.2") // tile screenshot tests (its resources must be merged)
     testImplementation("io.github.takahirom.roborazzi:roborazzi:1.79.0")
     testImplementation("io.github.takahirom.roborazzi:roborazzi-compose:1.79.0")
     testImplementation("io.github.takahirom.roborazzi:roborazzi-junit-rule:1.79.0")
