@@ -1,4 +1,4 @@
-# Encore for Wear OS
+# Encore Baton (Wear OS)
 
 A native Wear OS app (Kotlin, Compose for Wear OS, Media3), built alongside the phone app in the same
 Android Gradle project. It is not Flutter: round screens, the crown, tiles and complications need the

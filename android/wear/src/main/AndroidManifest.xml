@@ -14,7 +14,7 @@
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <application
-        android:label="Encore"
+        android:label="Encore Baton"
         android:icon="@mipmap/ic_launcher"
         android:allowBackup="false"
         android:usesCleartextTraffic="true"
@@ -58,7 +58,7 @@
         <service
             android:name=".tile.NowPlayingTileService"
             android:exported="true"
-            android:label="Encore"
+            android:label="Encore Baton"
             android:permission="com.google.android.wearable.permission.BIND_TILE_PROVIDER">
             <intent-filter>
                 <action android:name="androidx.wear.tiles.action.BIND_TILE_PROVIDER" />
@@ -70,7 +70,7 @@
             android:name=".complication.NowPlayingComplicationService"
             android:exported="true"
             android:icon="@drawable/ic_stat_encore"
-            android:label="Encore: now playing"
+            android:label="Encore Baton: now playing"
             android:permission="com.google.android.wearable.permission.BIND_COMPLICATION_PROVIDER">
             <intent-filter>
                 <action android:name="android.support.wearable.complications.ACTION_COMPLICATION_UPDATE_REQUEST" />
