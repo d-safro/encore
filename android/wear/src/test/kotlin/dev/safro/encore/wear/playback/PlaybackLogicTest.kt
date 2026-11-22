@@ -1,5 +1,6 @@
 package dev.safro.encore.wear.playback
 
+import androidx.media3.common.Player
 import dev.safro.encore.wear.data.Settings
 import dev.safro.encore.wear.net.NetKind
 import kotlinx.coroutines.test.runTest
@@ -55,6 +56,16 @@ class PlayTallyTest {
         t.durationKnown(60_000)
         now = 30_000
         assertTrue(t.counts())
+    }
+}
+
+class NetworkHoldTest {
+    @Test fun heldOnlyWhilePlayingOrAboutTo() {
+        assertTrue(wantsNetwork(true, Player.STATE_BUFFERING, failed = false))
+        assertTrue(wantsNetwork(true, Player.STATE_READY, failed = false))
+        assertFalse(wantsNetwork(false, Player.STATE_READY, failed = false))
+        assertFalse(wantsNetwork(true, Player.STATE_ENDED, failed = false)) // the queue's end
+        assertFalse(wantsNetwork(true, Player.STATE_IDLE, failed = true)) // an error
     }
 }
 

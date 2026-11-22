@@ -20,7 +20,7 @@ import dev.safro.encore.wear.data.NowPlayingStore
 /** A watch-face complication: the song playing now (short: its title; long: title and artist). */
 class NowPlayingComplicationService : SuspendingComplicationDataSourceService() {
     override suspend fun onComplicationRequest(request: ComplicationRequest): ComplicationData? =
-        build(this, request.complicationType, Graph.get(this).nowPlaying.info.value)
+        build(this, request.complicationType, Graph.get(this).nowPlaying.current())
 
     override fun getPreviewData(type: ComplicationType): ComplicationData? =
         build(this, type, NowPlayingStore.Info("Blue in Green", "Miles Davis", playing = true, onPhone = false))

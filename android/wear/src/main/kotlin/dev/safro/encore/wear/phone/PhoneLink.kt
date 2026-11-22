@@ -81,7 +81,9 @@ class PhoneLink(private val context: Context, private val scope: CoroutineScope)
         if (!on) return
         watching = scope.launch {
             while (isActive) {
-                send(Command.Subscribe(90))
+                // the cover is sent again only if the watch doesn't have this song's
+                val s = _state.value
+                send(Command.Subscribe(90, fresh = s.art == null || s.artFor != s.nowPlaying.mediaId))
                 delay(60_000)
             }
         }
@@ -98,6 +100,7 @@ class PhoneLink(private val context: Context, private val scope: CoroutineScope)
         )
         Graph.get(context).nowPlaying.set(
             if (n.isEmpty) null else NowPlayingStore.Info(n.title, n.artist, n.playing, onPhone = true),
+            fromPhone = true,
         )
     }
 

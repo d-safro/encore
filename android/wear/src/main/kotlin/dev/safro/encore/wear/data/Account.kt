@@ -60,6 +60,13 @@ class AccountStore(private val prefs: SharedPreferences) {
         return true
     }
 
+    /** The phone signed out: a sign-in copied from it goes too (password included); one typed here stays. */
+    fun phoneSignedOut(): Boolean {
+        if (current?.fromPhone != true) return false
+        signOut()
+        return true
+    }
+
     fun setLocalAddress(address: String) {
         val a = current ?: return
         save(a.copy(localAddress = address.trim().trimEnd('/')))

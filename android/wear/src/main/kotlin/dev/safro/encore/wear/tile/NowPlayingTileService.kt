@@ -31,11 +31,13 @@ import dev.safro.encore.wear.data.NowPlayingStore
 class NowPlayingTileService : TileService() {
     override fun onTileRequest(requestParams: RequestBuilders.TileRequest): ListenableFuture<TileBuilders.Tile> {
         val g = Graph.get(this)
-        val layout = TileLayout.layout(this, requestParams.deviceConfiguration, g.nowPlaying.info.value, g.settings.current.tilePlaylistName)
+        val info = g.nowPlaying.current()
+        val layout = TileLayout.layout(this, requestParams.deviceConfiguration, info, g.settings.current.tilePlaylistName)
         return Futures.immediateFuture(
             TileBuilders.Tile.Builder()
                 .setResourcesVersion(RESOURCES)
-                .setFreshnessIntervalMillis(0) // redrawn when the song changes (NowPlayingStore asks)
+                // redrawn when the song changes (NowPlayingStore asks); the phone's song, also once it's stale
+                .setFreshnessIntervalMillis(if (info?.onPhone == true) NowPlayingStore.PHONE_STALE_MS else 0)
                 .setTileTimeline(TimelineBuilders.Timeline.fromLayoutElement(layout))
                 .build(),
         )
