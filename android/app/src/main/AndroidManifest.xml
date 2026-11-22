@@ -13,6 +13,9 @@
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE"/>
     <!-- "What's playing?" in Search records 10 s; asked only when you tap it -->
     <uses-permission android:name="android.permission.RECORD_AUDIO"/>
+    <!-- Library > On this device: the music files on the phone (asked only when you open it) -->
+    <uses-permission android:name="android.permission.READ_MEDIA_AUDIO"/>
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32"/>
 
     <application
         android:label="Encore"
@@ -33,6 +36,14 @@
               android:name="io.flutter.embedding.android.NormalTheme"
               android:resource="@style/NormalTheme"
               />
+            <!-- "Open with Encore": a music file from a file manager or another app plays here -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <data android:scheme="content"/>
+                <data android:scheme="file"/>
+                <data android:mimeType="audio/*"/>
+            </intent-filter>
         </activity>
         <!-- The app icon you choose in Settings: one of these is switched on at a time -->
         <activity-alias android:name=".IconScript" android:targetActivity=".MainActivity"

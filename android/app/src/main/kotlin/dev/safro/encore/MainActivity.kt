@@ -21,20 +21,168 @@ class MainActivity : AudioServiceActivity() {
     private var recorder: android.media.MediaRecorder? = null
     private var micAnswer: MethodChannel.Result? = null
 
+    // Library > On this device: the "Music and audio" permission, and files opened with Encore
+    private var audioAnswer: MethodChannel.Result? = null
+    private var filesChannel: MethodChannel? = null
+    private var pendingOpen: String? = null
+
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        val ok = grantResults.firstOrNull() == android.content.pm.PackageManager.PERMISSION_GRANTED
         if (requestCode == 4711) {
-            micAnswer?.success(grantResults.firstOrNull() == android.content.pm.PackageManager.PERMISSION_GRANTED)
+            micAnswer?.success(ok)
             micAnswer = null
+        }
+        if (requestCode == 4712) {
+            audioAnswer?.success(ok)
+            audioAnswer = null
+        }
+    }
+
+    /** The music file this activity was opened with ("Open with Encore"), if any. */
+    private fun openedUri(i: Intent?): String? =
+        if (i?.action == Intent.ACTION_VIEW && i.type?.startsWith("audio/") != false) i?.data?.toString() else null
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        openedUri(intent)?.let { filesChannel?.invokeMethod("open", listOf(it)) }
+    }
+
+    private fun audioPermission(): String =
+        if (Build.VERSION.SDK_INT >= 33) android.Manifest.permission.READ_MEDIA_AUDIO
+        else android.Manifest.permission.READ_EXTERNAL_STORAGE
+
+    /** Every music file MediaStore knows, with its tags; one cover per album saved into [covers]. */
+    private fun mediaStoreAudio(covers: File): List<Map<String, Any?>> {
+        val out = mutableListOf<Map<String, Any?>>()
+        val base = android.provider.MediaStore.Audio.Media.EXTERNAL_CONTENT_URI
+        val cols = arrayOf(
+            android.provider.MediaStore.Audio.Media._ID, android.provider.MediaStore.Audio.Media.TITLE,
+            android.provider.MediaStore.Audio.Media.ARTIST, android.provider.MediaStore.Audio.Media.ALBUM,
+            android.provider.MediaStore.Audio.Media.ALBUM_ID, android.provider.MediaStore.Audio.Media.TRACK,
+            android.provider.MediaStore.Audio.Media.YEAR, android.provider.MediaStore.Audio.Media.DURATION,
+            android.provider.MediaStore.Audio.Media.DATE_MODIFIED, android.provider.MediaStore.Audio.Media.DISPLAY_NAME,
+        )
+        val tried = HashMap<Long, String?>()
+        contentResolver.query(base, cols, "${android.provider.MediaStore.Audio.Media.IS_MUSIC} != 0", null, null)?.use { c ->
+            while (c.moveToNext()) {
+                val id = c.getLong(0)
+                val uri = android.content.ContentUris.withAppendedId(base, id)
+                val albumId = c.getLong(4)
+                val cover = tried.getOrPut(albumId) { albumCover(uri, albumId, covers) }
+                out.add(mapOf(
+                    "uri" to uri.toString(), "title" to c.getString(1), "artist" to c.getString(2),
+                    "album" to c.getString(3), "track" to c.getInt(5), "year" to c.getInt(6),
+                    "duration" to c.getLong(7), "mtime" to c.getLong(8) * 1000, "name" to c.getString(9),
+                    "cover" to cover,
+                ))
+            }
+        }
+        return out
+    }
+
+    /** An album's picture (from its first song), kept as a file; a "none" marker when it has none. */
+    private fun albumCover(uri: Uri, albumId: Long, covers: File): String? {
+        val f = File(covers, "ma-$albumId.jpg")
+        val none = File(covers, "ma-$albumId.none")
+        if (f.exists()) return f.path
+        if (none.exists() || Build.VERSION.SDK_INT < 29) return null
+        return try {
+            val bmp = contentResolver.loadThumbnail(uri, android.util.Size(512, 512), null)
+            covers.mkdirs()
+            f.outputStream().use { bmp.compress(android.graphics.Bitmap.CompressFormat.JPEG, 85, it) }
+            f.path
+        } catch (_: Exception) {
+            try { none.createNewFile() } catch (_: Exception) {}
+            null
+        }
+    }
+
+    /** Tags of one file opened with Encore (it may not be in MediaStore). */
+    private fun probeAudio(uri: Uri, covers: File): Map<String, Any?> {
+        val r = android.media.MediaMetadataRetriever()
+        try {
+            r.setDataSource(this, uri)
+            fun tag(k: Int) = r.extractMetadata(k)
+            var cover: String? = null
+            r.embeddedPicture?.let { bytes ->
+                val f = File(covers, "open-${java.security.MessageDigest.getInstance("SHA-1").digest(bytes).take(10).joinToString("") { "%02x".format(it) }}.jpg")
+                covers.mkdirs()
+                if (!f.exists()) f.writeBytes(bytes)
+                cover = f.path
+            }
+            var name: String? = null
+            try {
+                contentResolver.query(uri, arrayOf(android.provider.OpenableColumns.DISPLAY_NAME), null, null, null)?.use { c ->
+                    if (c.moveToFirst()) name = c.getString(0)
+                }
+            } catch (_: Exception) {}
+            return mapOf(
+                "title" to tag(android.media.MediaMetadataRetriever.METADATA_KEY_TITLE),
+                "artist" to tag(android.media.MediaMetadataRetriever.METADATA_KEY_ARTIST),
+                "album" to tag(android.media.MediaMetadataRetriever.METADATA_KEY_ALBUM),
+                "track" to tag(android.media.MediaMetadataRetriever.METADATA_KEY_CD_TRACK_NUMBER)?.substringBefore('/')?.trim()?.toIntOrNull(),
+                "year" to tag(android.media.MediaMetadataRetriever.METADATA_KEY_YEAR)?.take(4)?.toIntOrNull(),
+                "duration" to tag(android.media.MediaMetadataRetriever.METADATA_KEY_DURATION)?.toLongOrNull(),
+                "name" to (name ?: uri.lastPathSegment),
+                "cover" to cover,
+            )
+        } finally {
+            r.release()
         }
     }
     private var multicast: android.net.wifi.WifiManager.MulticastLock? = null
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
         // App updates and links: which APK fits this phone, permission to install, the installer, a browser.
+        // files opened with Encore: the one it was started with, and later ones (onNewIntent)
+        pendingOpen = openedUri(intent)
+        filesChannel = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "encore/files").apply {
+            setMethodCallHandler { call, result ->
+                if (call.method == "initial") {
+                    result.success(pendingOpen?.let { listOf(it) } ?: emptyList<String>())
+                    pendingOpen = null
+                } else result.notImplemented()
+            }
+        }
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "encore/system").setMethodCallHandler { call, result ->
             try {
                 when (call.method) {
+                    "audioPermission" -> {
+                        val p = audioPermission()
+                        if (checkSelfPermission(p) == android.content.pm.PackageManager.PERMISSION_GRANTED) {
+                            result.success(true)
+                        } else if (call.argument<Boolean>("ask") != true) {
+                            result.success(false)
+                        } else {
+                            audioAnswer?.success(false)
+                            audioAnswer = result
+                            requestPermissions(arrayOf(p), 4712)
+                        }
+                    }
+                    "mediaStoreAudio" -> {   // can take a while on a big phone: off the main thread
+                        val covers = File(call.argument<String>("covers")!!)
+                        Thread {
+                            try {
+                                val list = mediaStoreAudio(covers)
+                                runOnUiThread { result.success(list) }
+                            } catch (e: Exception) {
+                                runOnUiThread { result.error("mediastore", e.message, null) }
+                            }
+                        }.start()
+                    }
+                    "probeAudio" -> {
+                        val uri = Uri.parse(call.argument<String>("uri")!!)
+                        val covers = File(call.argument<String>("covers")!!)
+                        Thread {
+                            try {
+                                val tags = probeAudio(uri, covers)
+                                runOnUiThread { result.success(tags) }
+                            } catch (e: Exception) {
+                                runOnUiThread { result.error("probe", e.message, null) }
+                            }
+                        }.start()
+                    }
                     "abis" -> result.success(Build.SUPPORTED_ABIS.toList())
                     "model" -> result.success(Build.MODEL)   // this phone's name on your other devices
                     "icon" -> result.success(pendingIcon ?: icons.firstOrNull { iconOn(it) } ?: icons.first())
