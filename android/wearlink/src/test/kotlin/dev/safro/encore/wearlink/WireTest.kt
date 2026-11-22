@@ -100,7 +100,7 @@ class DispatcherTest {
             if (parentId == "boom") throw IllegalStateException("Phone is offline") else listOf(BrowseItem("a", "A"))
         override suspend fun playItem(mediaId: String) { calls += "playItem $mediaId" }
         override suspend fun playSearch(query: String) { calls += "search $query" }
-        override fun subscribe(nodeId: String, seconds: Int) { calls += "subscribe $nodeId $seconds" }
+        override fun subscribe(nodeId: String, seconds: Int, fresh: Boolean) { calls += "subscribe $nodeId $seconds $fresh" }
     }
 
     private suspend fun ask(f: Fake, c: Command?) = RemoteDispatcher.handle("watch-1", c, f)
@@ -115,7 +115,25 @@ class DispatcherTest {
         ask(f, Command.SeekTo(-50))
         ask(f, Command.SetVolume(-3))
         ask(f, Command.Subscribe(100_000))
-        assertEquals(listOf("heart", "pause", "play", "seek 0", "setVolume 0", "subscribe watch-1 300"), f.calls)
+        ask(f, Command.Subscribe(90, fresh = false))
+        assertEquals(
+            listOf("heart", "pause", "play", "seek 0", "setVolume 0", "subscribe watch-1 300 true", "subscribe watch-1 90 false"),
+            f.calls,
+        )
+    }
+
+    @Test fun anOlderWatchsSubscribeAsksForTheCover() {
+        assertEquals(Command.Subscribe(90, fresh = true), Wire.decodeCommand("""{"type":"subscribe","seconds":90}""".toByteArray()))
+    }
+
+    @Test fun onlyRealChangesAreSentAgain() {
+        val a = NowPlaying(mediaId = "s", title = "T", durationMs = 200_000, positionMs = 10_000, updatedAt = 1_000_000, playing = true)
+        assertTrue(a.differsFrom(null))
+        // a moment later, where it counts on to (a new buffered position, say): not sent
+        assertFalse(a.copy(positionMs = 15_000, updatedAt = 1_005_000).differsFrom(a))
+        assertTrue(a.copy(positionMs = 60_000, updatedAt = 1_005_000).differsFrom(a)) // a seek
+        assertTrue(a.copy(playing = false).differsFrom(a))
+        assertTrue(a.copy(volume = 3).differsFrom(a))
     }
 
     @Test fun queueAndBrowseAnswerWithLists() = runTest {

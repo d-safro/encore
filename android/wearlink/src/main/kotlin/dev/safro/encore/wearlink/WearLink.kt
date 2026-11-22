@@ -32,8 +32,10 @@ const val PROTOCOL_VERSION = 1
 
 @Serializable
 sealed interface Command {
-    /** Send me [Paths.STATE] / [Paths.ART] for the next [seconds] (the watch repeats it while the screen is on). */
-    @Serializable @SerialName("subscribe") data class Subscribe(val seconds: Int = 90) : Command
+    /** Send me [Paths.STATE] / [Paths.ART] for the next [seconds] (the watch repeats it while the screen is on).
+     *  [fresh]: the watch has no cover for the song, send it again; false: it has (otherwise each cover goes once
+     *  per song). A watch that doesn't send it gets true: the cover each time, as before. */
+    @Serializable @SerialName("subscribe") data class Subscribe(val seconds: Int = 90, val fresh: Boolean = true) : Command
     @Serializable @SerialName("state") data object State : Command
     @Serializable @SerialName("play") data object Play : Command
     @Serializable @SerialName("pause") data object Pause : Command
@@ -74,6 +76,14 @@ data class NowPlaying(
     val queueSize: Int = 0,
 ) {
     val isEmpty get() = mediaId.isEmpty() && title.isEmpty()
+
+    /** Worth sending again after [last]: something shown changed, or the position isn't where [last] counts
+     *  on to (a seek). A new buffered position alone isn't. */
+    fun differsFrom(last: NowPlaying?, toleranceMs: Long = 1_500): Boolean {
+        if (last == null) return true
+        if (copy(positionMs = 0, updatedAt = 0) != last.copy(positionMs = 0, updatedAt = 0)) return true
+        return kotlin.math.abs(positionAt(updatedAt) - last.positionAt(updatedAt)) > toleranceMs
+    }
 
     /** Where the song is at [now] (same clock as [updatedAt]), counting on while it plays. */
     fun positionAt(now: Long): Long {

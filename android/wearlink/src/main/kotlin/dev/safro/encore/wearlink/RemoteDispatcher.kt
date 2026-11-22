@@ -16,8 +16,8 @@ interface RemoteTarget {
     suspend fun browse(parentId: String): List<BrowseItem>
     suspend fun playItem(mediaId: String)
     suspend fun playSearch(query: String)
-    /** Keep sending state to [nodeId] for [seconds]. */
-    fun subscribe(nodeId: String, seconds: Int)
+    /** Keep sending state to [nodeId] for [seconds]; [fresh]: its screen just opened (it needs the cover). */
+    fun subscribe(nodeId: String, seconds: Int, fresh: Boolean)
 }
 
 /** Turns a request from the watch into calls on the phone's player, and says what to answer. */
@@ -32,7 +32,7 @@ object RemoteDispatcher {
         if (command == null) return Reply.Error("Update Encore on your phone")
         return try {
             when (command) {
-                is Command.Subscribe -> target.subscribe(nodeId, command.seconds.coerceIn(1, MAX_SUBSCRIBE_SECONDS))
+                is Command.Subscribe -> target.subscribe(nodeId, command.seconds.coerceIn(1, MAX_SUBSCRIBE_SECONDS), command.fresh)
                 Command.State -> Unit
                 Command.Play -> target.play()
                 Command.Pause -> target.pause()

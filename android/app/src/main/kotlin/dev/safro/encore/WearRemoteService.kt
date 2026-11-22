@@ -72,7 +72,10 @@ class PhoneRemote private constructor(private val context: Context) : RemoteTarg
     private var browser: MediaBrowserCompat? = null
     private var controller: MediaControllerCompat? = null
     private val subscribers = mutableMapOf<String, Long>() // watch node -> until (elapsedRealtime)
-    private var lastArtFor: String? = null
+    private val artSent = mutableMapOf<String, String>() // watch node -> the song whose cover it has
+    private var lastSent: NowPlaying? = null
+    private var lastSentAt = 0L // elapsedRealtime
+    private var sendLater = false
 
     private val callback = object : MediaControllerCompat.Callback() {
         override fun onMetadataChanged(metadata: MediaMetadataCompat?) = pushState(withArt = true)
@@ -205,10 +208,12 @@ class PhoneRemote private constructor(private val context: Context) : RemoteTarg
     override suspend fun playItem(mediaId: String) { connected(); controls?.playFromMediaId(mediaId, null) }
     override suspend fun playSearch(query: String) { connected(); controls?.playFromSearch(query, null) }
 
-    override fun subscribe(nodeId: String, seconds: Int) {
+    override fun subscribe(nodeId: String, seconds: Int, fresh: Boolean) {
         main.post {
             subscribers[nodeId] = SystemClock.elapsedRealtime() + seconds * 1000L
-            lastArtFor = null // a watch that just opened its remote needs the cover too
+            // the watch has no cover for this song: send it again (otherwise once per song)
+            if (fresh) artSent.remove(nodeId)
+            lastSent = null // the state goes out now, whatever it is
             scope.launch { runCatching { connected() }; pushState(withArt = true) }
         }
     }
@@ -216,26 +221,50 @@ class PhoneRemote private constructor(private val context: Context) : RemoteTarg
     private fun watchers(): List<String> {
         val now = SystemClock.elapsedRealtime()
         subscribers.entries.removeAll { it.value < now }
+        artSent.keys.retainAll(subscribers.keys)
         return subscribers.keys.toList()
     }
 
+    /**
+     * Sends the state to the watches (main thread). The session changes for every new buffered position too:
+     * only real changes go out (see NowPlaying.differsFrom), at most one a second; the cover once per song
+     * per watch.
+     */
     private fun pushState(withArt: Boolean) {
         val c = controller ?: return
         val nodes = watchers()
         if (nodes.isEmpty()) return
         val n = state(c)
         val messages = Wearable.getMessageClient(context)
-        val bytes = Wire.encode(n)
-        for (node in nodes) messages.sendMessage(node, Paths.STATE, bytes)
-        if (withArt && n.mediaId.isNotEmpty() && n.mediaId != lastArtFor) {
-            lastArtFor = n.mediaId
-            val meta = c.metadata
-            scope.launch(Dispatchers.IO) {
-                val jpeg = cover(meta) ?: return@launch
-                val frame = ArtFrame(n.mediaId, jpeg).encode()
-                for (node in nodes) messages.sendMessage(node, Paths.ART, frame)
+        if (withArt && n.mediaId.isNotEmpty()) {
+            val need = nodes.filter { artSent[it] != n.mediaId }
+            if (need.isNotEmpty()) {
+                for (node in need) artSent[node] = n.mediaId
+                val meta = c.metadata
+                scope.launch(Dispatchers.IO) {
+                    val jpeg = cover(meta)
+                    if (jpeg == null) { // not loaded yet: tried again when the song's details change
+                        withContext(Dispatchers.Main) { for (node in need) if (artSent[node] == n.mediaId) artSent.remove(node) }
+                        return@launch
+                    }
+                    val frame = ArtFrame(n.mediaId, jpeg).encode()
+                    for (node in need) messages.sendMessage(node, Paths.ART, frame)
+                }
             }
         }
+        if (!n.differsFrom(lastSent)) return
+        val wait = lastSentAt + MIN_GAP_MS - SystemClock.elapsedRealtime()
+        if (wait > 0) {
+            if (!sendLater) {
+                sendLater = true
+                main.postDelayed({ sendLater = false; pushState(withArt = false) }, wait)
+            }
+            return
+        }
+        lastSent = n
+        lastSentAt = SystemClock.elapsedRealtime()
+        val bytes = Wire.encode(n)
+        for (node in nodes) messages.sendMessage(node, Paths.STATE, bytes)
     }
 
     /** The song's cover, small enough for a watch (Data Layer messages are kept under 100 KB). */
@@ -273,6 +302,7 @@ class PhoneRemote private constructor(private val context: Context) : RemoteTarg
     }.getOrNull()
 
     companion object {
+        private const val MIN_GAP_MS = 1_000L
         @Volatile private var instance: PhoneRemote? = null
         fun get(context: Context): PhoneRemote =
             instance ?: synchronized(this) { instance ?: PhoneRemote(context.applicationContext).also { instance = it } }
