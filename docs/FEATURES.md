@@ -30,6 +30,11 @@ as the server; with plain Navidrome they just don't appear.
 - Smart playlists (Navidrome's own, so every app sees them): one-tap presets like "Forgotten favourites" and
   "On repeat", or your own rules.
 - Folders: your real folders on disk (with Conductor), else Navidrome's artist / album view.
+- Getting your songs (Library › Playlists; Getting in the desktop's sidebar; needs Conductor 1.3): what your
+  server is fetching for you, as it goes: on its way (looking, waiting for the sender, downloading with its
+  progress), not found, and what arrived lately (tap to play), each marked on trial or kept, with today's trials
+  ("31 of 40 trials today"). Live with Conductor's event stream. An admin can look again, set one aside or bring
+  it back, stop getting it, or find another file on Soulseek and pick it.
 
 **Playback**
 - Background playback, media notification, lock screen, Bluetooth / headset buttons, home-screen widget,
