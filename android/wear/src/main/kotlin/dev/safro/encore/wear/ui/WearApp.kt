@@ -42,6 +42,7 @@ import dev.safro.encore.wearlink.BrowseItem
 import dev.safro.encore.wearlink.Command
 import dev.safro.encore.wearlink.QueueItem
 import dev.safro.encore.wearlink.Reply
+import dev.safro.encore.wearlink.SkipSettings
 import kotlinx.coroutines.launch
 
 /** The app: every screen, wired to the watch's player, the server and the phone. */
@@ -241,6 +242,10 @@ private fun WatchPlayerRoute(graph: Graph, player: PlayerConnection, volume: Vol
         onDispose { player.tick(false) }
     }
     val s = st.song
+    // the phone's skip seconds when it has said them, else its defaults
+    val phone by graph.phone.state.collectAsState()
+    val skip = phone.nowPlaying.takeIf { it.canSkip }?.let { it.skipBackSeconds to it.skipForwardSeconds }
+        ?: (SkipSettings.BACK to SkipSettings.FORWARD)
     PlayerScreen(
         NowPlayingUi(
             title = s?.title ?: "",
@@ -256,6 +261,8 @@ private fun WatchPlayerRoute(graph: Graph, player: PlayerConnection, volume: Vol
             output = AudioOutput.headphones(context),
             needsHeadphones = st.needsHeadphones,
             message = st.error,
+            skipBackSeconds = skip.first,
+            skipForwardSeconds = skip.second,
         ),
         PlayerActions(
             onToggle = {
@@ -269,6 +276,7 @@ private fun WatchPlayerRoute(graph: Graph, player: PlayerConnection, volume: Vol
             onVolume = volume::change,
             onOutput = { AudioOutput.openSwitcher(context) },
             onQueue = { go(Routes.QUEUE) },
+            onSkip = { forward -> player.skipBy(1000L * if (forward) skip.second else -skip.first) },
         ),
     )
 }
@@ -302,6 +310,9 @@ private fun RemoteRoute(graph: Graph, go: (String) -> Unit) {
             starred = n.starred,
             volume = if (n.maxVolume > 0) n.volume.toFloat() / n.maxVolume else 0f,
             onPhone = true,
+            skipBackSeconds = n.skipBackSeconds,
+            skipForwardSeconds = n.skipForwardSeconds,
+            spoken = n.spoken,
             message = when {
                 phone.reachable == false -> "Phone not connected"
                 phone.error != null -> phone.error
@@ -313,6 +324,7 @@ private fun RemoteRoute(graph: Graph, go: (String) -> Unit) {
             onToggle = { link.command(Command.TogglePlay) },
             onNext = { link.command(Command.Next) },
             onPrevious = { link.command(Command.Previous) },
+            onSkip = { link.command(Command.SkipBy(it)) },
             onHeart = { link.command(Command.ToggleHeart) },
             onVolume = { link.command(Command.ChangeVolume(it)) },
             onQueue = { go(Routes.REMOTE_QUEUE) },

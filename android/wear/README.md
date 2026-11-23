@@ -7,8 +7,9 @@ platform's own toolkit.
 ## What it does
 
 - **Remote for the phone.** Shows what Encore on the phone is playing, with its cover, and controls it:
-  play/pause, skip, heart, volume on the crown, the phone's queue (tap to jump) and the phone's library as
-  Android Auto sees it (Home, Playlists, Albums, Radio). Wear OS's built-in media controls can't do the heart,
+  play/pause, skip, skip back / forward by the phone's seconds (in previous / next's place for episodes and
+  audiobooks; on music, hold previous / next), heart, volume on the crown, the phone's queue (tap to jump)
+  and the phone's library as Android Auto sees it (Home, Playlists, Albums, Radio). Wear OS's built-in media controls can't do the heart,
   the queue or the library. It talks over the Wearable Data Layer; on the phone, `WearRemoteService`
   passes each request to Encore's own media session.
 - **Plays on its own** over the watch's Wi-Fi or LTE, straight from your Navidrome / Subsonic server:

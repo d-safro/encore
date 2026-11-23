@@ -15,6 +15,7 @@ import androidx.compose.material.icons.rounded.MusicNote
 import androidx.compose.material.icons.rounded.Pause
 import androidx.compose.material.icons.rounded.PhoneAndroid
 import androidx.compose.material.icons.rounded.PlayArrow
+import androidx.compose.material.icons.rounded.Replay
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material.icons.rounded.Shuffle
@@ -31,6 +32,7 @@ object Glyphs {
     val Pause = Icons.Rounded.Pause
     val Next = Icons.Rounded.SkipNext
     val Previous = Icons.Rounded.SkipPrevious
+    val Replay = Icons.Rounded.Replay
     val Heart = Icons.Rounded.Favorite
     val HeartOutline = Icons.Rounded.FavoriteBorder
     val Queue = Icons.AutoMirrored.Rounded.QueueMusic

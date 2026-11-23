@@ -25,6 +25,7 @@ import dev.safro.encore.wearlink.QueueItem
 import dev.safro.encore.wearlink.RemoteDispatcher
 import dev.safro.encore.wearlink.RemoteTarget
 import dev.safro.encore.wearlink.Reply
+import dev.safro.encore.wearlink.SkipSettings
 import dev.safro.encore.wearlink.Wire
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -41,6 +42,7 @@ import kotlin.coroutines.resumeWithException
 
 /**
  * Encore on a paired watch asks here (Wearable Data Layer, see android/wearlink): play, pause, skip, seek,
+ * skip back / forward by seconds,
  * volume, heart, the queue, and the library as Android Auto sees it. It all goes to Encore's own media
  * session, so the phone does exactly what its notification or a car would make it do; nothing in Dart had
  * to change for it.
@@ -133,8 +135,14 @@ class PhoneRemote private constructor(private val context: Context) : RemoteTarg
         val pos = p?.let { if (playing && it.lastPositionUpdateTime > 0) it.position + ((now - it.lastPositionUpdateTime) * speed).toLong() else it.position } ?: 0
         val queue = c.queue.orEmpty()
         val info = c.playbackInfo
+        val id = m?.getString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID) ?: ""
+        // the skip buttons' seconds from Encore's settings (Flutter keeps them in these shared preferences)
+        val (back, forward) = SkipSettings.of(
+            context.getSharedPreferences("FlutterSharedPreferences", Context.MODE_PRIVATE).getString("flutter.settings", null),
+            id,
+        )
         return NowPlaying(
-            mediaId = m?.getString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID) ?: "",
+            mediaId = id,
             title = m?.getString(MediaMetadataCompat.METADATA_KEY_TITLE) ?: m?.getString(MediaMetadataCompat.METADATA_KEY_DISPLAY_TITLE) ?: "",
             artist = m?.getString(MediaMetadataCompat.METADATA_KEY_ARTIST) ?: m?.getString(MediaMetadataCompat.METADATA_KEY_DISPLAY_SUBTITLE) ?: "",
             album = m?.getString(MediaMetadataCompat.METADATA_KEY_ALBUM) ?: "",
@@ -150,6 +158,9 @@ class PhoneRemote private constructor(private val context: Context) : RemoteTarg
             maxVolume = info?.maxVolume ?: 15,
             queueIndex = queue.indexOfFirst { it.queueId == p?.activeQueueItemId },
             queueSize = queue.size,
+            skipBackSeconds = back,
+            skipForwardSeconds = forward,
+            spoken = SkipSettings.isSpoken(id),
         )
     }
 
@@ -158,6 +169,8 @@ class PhoneRemote private constructor(private val context: Context) : RemoteTarg
     override suspend fun next() { connected(); controls?.skipToNext() }
     override suspend fun previous() { connected(); controls?.skipToPrevious() }
     override suspend fun seekTo(positionMs: Long) { connected(); controls?.seekTo(positionMs) }
+    // the phone's own rewind / fast-forward: its seconds, clamped at the start, the next song past the end
+    override suspend fun skipBy(forward: Boolean) { connected(); if (forward) controls?.fastForward() else controls?.rewind() }
 
     override suspend fun changeVolume(steps: Int) {
         val c = connected()

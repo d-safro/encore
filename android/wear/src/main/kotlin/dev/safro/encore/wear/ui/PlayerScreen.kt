@@ -24,6 +24,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Brush
@@ -34,9 +35,11 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.wear.compose.material3.ButtonDefaults
 import androidx.wear.compose.material3.CircularProgressIndicator
 import androidx.wear.compose.material3.CompactButton
@@ -71,6 +74,11 @@ data class NowPlayingUi(
     val needsHeadphones: Boolean = false,
     val onPhone: Boolean = false,
     val message: String? = null,
+    /** Skip back / forward seconds (the phone's setting); 0: no skipping. */
+    val skipBackSeconds: Int = 0,
+    val skipForwardSeconds: Int = 0,
+    /** A podcast episode or audiobook: the skip buttons take previous / next's place (held: previous / next). */
+    val spoken: Boolean = false,
 ) {
     val empty get() = title.isEmpty()
 }
@@ -85,6 +93,8 @@ class PlayerActions(
     val onOutput: (() -> Unit)? = null,
     val onQueue: (() -> Unit)? = null,
     val onLibrary: (() -> Unit)? = null,
+    /** Skip back (false) or forward (true) by [NowPlayingUi.skipBackSeconds] / [NowPlayingUi.skipForwardSeconds]. */
+    val onSkip: ((Boolean) -> Unit)? = null,
 )
 
 @Composable
@@ -205,10 +215,11 @@ private fun Source(ui: NowPlayingUi) {
 
 @Composable
 private fun Controls(ui: NowPlayingUi, actions: PlayerActions, ambient: Boolean) {
+    // no room for five buttons on a watch: skipping by seconds shares the outer two with previous / next.
+    // Music: tap for previous / next, hold to skip; episodes and audiobooks: the other way round.
+    val skip = actions.onSkip?.takeIf { ui.skipBackSeconds > 0 && ui.skipForwardSeconds > 0 && !ui.empty }
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-        IconButton(onClick = actions.onPrevious, enabled = ui.hasPrevious && !ui.empty) {
-            Icon(Glyphs.Previous, contentDescription = "Previous", modifier = Modifier.size(28.dp))
-        }
+        Outer(ui, actions, skip, forward = false)
         val icon: @Composable () -> Unit = {
             if (ui.buffering && ui.playing) {
                 CircularProgressIndicator(modifier = Modifier.size(28.dp), strokeWidth = 3.dp)
@@ -224,9 +235,52 @@ private fun Controls(ui: NowPlayingUi, actions: PlayerActions, ambient: Boolean)
         // ambient: an outline only, so the screen stays almost all black
         if (ambient) OutlinedIconButton(onClick = actions.onToggle, enabled = !ui.empty, modifier = big) { icon() }
         else FilledIconButton(onClick = actions.onToggle, enabled = !ui.empty, modifier = big) { icon() }
-        IconButton(onClick = actions.onNext, enabled = ui.hasNext && !ui.empty) {
-            Icon(Glyphs.Next, contentDescription = "Next", modifier = Modifier.size(28.dp))
+        Outer(ui, actions, skip, forward = true)
+    }
+}
+
+/** Previous / next, or skip back / forward by seconds, with the other on a long press. */
+@Composable
+private fun Outer(ui: NowPlayingUi, actions: PlayerActions, skip: ((Boolean) -> Unit)?, forward: Boolean) {
+    val move = if (forward) actions.onNext else actions.onPrevious
+    val moveLabel = if (forward) "Next" else "Previous"
+    val canMove = if (forward) ui.hasNext else ui.hasPrevious
+    val seconds = if (forward) ui.skipForwardSeconds else ui.skipBackSeconds
+    val skipLabel = skipLabel(seconds, forward)
+    when {
+        skip == null -> IconButton(onClick = move, enabled = canMove && !ui.empty) {
+            Icon(if (forward) Glyphs.Next else Glyphs.Previous, contentDescription = moveLabel, modifier = Modifier.size(28.dp))
         }
+        ui.spoken -> IconButton(
+            onClick = { skip(forward) },
+            onLongClick = move.takeIf { canMove },
+            onLongClickLabel = moveLabel.takeIf { canMove },
+        ) {
+            SkipGlyph(seconds, forward, skipLabel)
+        }
+        else -> IconButton(
+            onClick = move,
+            onLongClick = { skip(forward) },
+            onLongClickLabel = skipLabel,
+        ) {
+            Icon(if (forward) Glyphs.Next else Glyphs.Previous, contentDescription = moveLabel, modifier = Modifier.size(28.dp))
+        }
+    }
+}
+
+/** What a screen reader says for a skip (as on the phone). */
+fun skipLabel(seconds: Int, forward: Boolean) = "${if (forward) "Forward" else "Back"} $seconds seconds"
+
+/** A circling arrow with the seconds inside, like the phone's. */
+@Composable
+private fun SkipGlyph(seconds: Int, forward: Boolean, label: String) {
+    Box(Modifier.size(30.dp).semantics { contentDescription = label }, contentAlignment = Alignment.Center) {
+        Icon(Glyphs.Replay, contentDescription = null, modifier = Modifier.fillMaxSize().scale(if (forward) -1f else 1f, 1f))
+        Text(
+            "$seconds",
+            style = MaterialTheme.typography.labelSmall.copy(fontSize = 9.sp, lineHeight = 9.sp, fontWeight = FontWeight.Bold),
+            modifier = Modifier.padding(top = 3.dp),
+        )
     }
 }
 

@@ -43,6 +43,10 @@ sealed interface Command {
     @Serializable @SerialName("next") data object Next : Command
     @Serializable @SerialName("previous") data object Previous : Command
     @Serializable @SerialName("seek") data class SeekTo(val positionMs: Long) : Command
+    /** Skip back or [forward] by the seconds set on the phone (its notification's rewind / fast-forward: never
+     *  before the start, past the end the next song). Sent only to a phone whose [NowPlaying.skipBackSeconds]
+     *  says it has them; an older phone answers [Reply.Error] to it, as to any command it doesn't know. */
+    @Serializable @SerialName("skipBy") data class SkipBy(val forward: Boolean) : Command
     /** Phone media volume up or down by [steps] (negative: down). */
     @Serializable @SerialName("volume") data class ChangeVolume(val steps: Int) : Command
     @Serializable @SerialName("setVolume") data class SetVolume(val level: Int) : Command
@@ -74,7 +78,15 @@ data class NowPlaying(
     val maxVolume: Int = 15,
     val queueIndex: Int = -1,
     val queueSize: Int = 0,
+    /** The phone's skip back / forward seconds (Settings › Playback) when it shows those buttons for what's
+     *  playing; 0: it doesn't (or it's an older phone that can't). */
+    val skipBackSeconds: Int = 0,
+    val skipForwardSeconds: Int = 0,
+    /** A podcast episode or audiobook: the skip buttons matter more than previous / next. */
+    val spoken: Boolean = false,
 ) {
+    val canSkip get() = skipBackSeconds > 0 && skipForwardSeconds > 0
+
     val isEmpty get() = mediaId.isEmpty() && title.isEmpty()
 
     /** Worth sending again after [last]: something shown changed, or the position isn't where [last] counts
@@ -179,5 +191,28 @@ class ArtFrame(val mediaId: String, val image: ByteArray) {
             if (b.size < 2 + n) return null
             return ArtFrame(b.copyOfRange(2, 2 + n).decodeToString(), b.copyOfRange(2 + n, b.size))
         }
+    }
+}
+
+/**
+ * The phone's skip buttons for the watch, from its settings (the JSON Encore keeps in its shared preferences;
+ * names as in encore_core's settings.dart and skip.dart): (back seconds, forward seconds), or (0, 0) when the
+ * phone shows none for [mediaId] (a radio station, or music when only podcasts and audiobooks get them).
+ */
+object SkipSettings {
+    val CHOICES = setOf(5, 10, 15, 30, 60)
+    const val BACK = 15
+    const val FORWARD = 30
+
+    fun isSpoken(mediaId: String) = mediaId.startsWith("pe-") || mediaId.startsWith("ab-")
+
+    fun of(settingsJson: String?, mediaId: String): Pair<Int, Int> {
+        if (mediaId.isEmpty() || mediaId.startsWith("radio-")) return 0 to 0
+        val j = settingsJson?.let { runCatching { Wire.json.parseToJsonElement(it) as? kotlinx.serialization.json.JsonObject }.getOrNull() }
+        fun int(k: String, fallback: Int) =
+            (j?.get(k) as? kotlinx.serialization.json.JsonPrimitive)?.content?.toDoubleOrNull()?.toInt()?.takeIf { it in CHOICES } ?: fallback
+        val only = (j?.get("skipButtons") as? kotlinx.serialization.json.JsonPrimitive)?.content == "spoken"
+        if (only && !isSpoken(mediaId)) return 0 to 0
+        return int("skipBack", BACK) to int("skipForward", FORWARD)
     }
 }
