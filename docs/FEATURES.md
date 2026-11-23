@@ -41,6 +41,14 @@ as the server; with plain Navidrome they just don't appear.
 - Gapless queue: play now / next / last, drag to reorder, swipe to remove, save as playlist; restored after a
   restart and kept on the server (continue in another app or device).
 - Shuffle, repeat, speed and pitch, skip silence, sleep timer (minutes or end of song).
+- Skip back / forward by seconds (Settings › Playback: 5, 10, 15, 30 or 60 s; 15 back and 30 forward at
+  first, kept the same on all your devices). Buttons between the times under the seek bar, in the desktop's
+  player bar (Shift+← / Shift+→ use the same seconds), on the remote for another device, and as rewind /
+  fast-forward on the notification, lock screen, Android Auto and headphones. Never before the start; past the
+  end, the next song. "Show skip buttons for": everything, or only podcasts and audiobooks. On the notification
+  (Android 13 and later) they take heart and shuffle's place for episodes and audiobooks. Encore Baton: on
+  episodes and audiobooks the watch's outer buttons skip by seconds (hold for previous / next); on music, hold
+  previous / next to skip.
 - Crossfade (up to 12 s); albums played in order stay seamless unless you choose otherwise.
 - DJ (Settings › Playback, off at first): before every song, every 3rd or 5th, a line about the next one,
   written by your server's AI (Ollama, from what your library knows: title, album, year, your plays) and read by
