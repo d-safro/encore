@@ -136,6 +136,10 @@ as the server; with plain Navidrome they just don't appear.
   `tools/encore-usb.sh` there. Everything (browsing, playing, downloads) then goes through the cable, without
   Wi-Fi, internet or a VPN; Settings › Downloads › Copy all fetches the whole library. Unplug any time: it
   carries on over the network.
+- Server address (Settings › Server): your server has another address now, e.g. a public one besides the
+  one on your VPN? Change it there: Encore first checks that the same server answers at it with your login
+  (and has the songs you have from it), then carries on there with your downloads, queue, pins and settings
+  as they were. Your watch follows. When it can't, it says why and nothing changes.
 - Address on your home network (Settings › Server, optional): on the same Wi-Fi as your server, Encore goes
   straight there instead of through a VPN or the internet, and uses the main address everywhere else.
 - Offline mode: the whole library index is kept on the phone (refreshed every 12 hours) for browsing and
