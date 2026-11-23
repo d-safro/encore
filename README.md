@@ -18,8 +18,11 @@
 
 - **Plays your library** from Conductor, Navidrome or any Subsonic / OpenSubsonic server, and the music files already on your phone.
 - **Works offline:** download songs, albums and playlists with their covers and lyrics; resumes downloads after a restart; plays over a USB cable to the server's computer.
-- **Feels like the big streaming apps:** Home shelves, mixes made for you (Repertoire), radio, smart shuffle, Automix crossfades, synced lyrics with translation (Libretto), a year in review (Curtain Call).
-- **Finds music you don't have yet** (with Conductor): search shows it, and hearting it fetches it.
+- **Feels like the big streaming apps:** Home shelves, Made for you, mixes (Repertoire), radio, smart shuffle, Automix crossfades, synced lyrics with translation (Libretto), a year in review (Curtain Call).
+- **Finds music you don't have yet** (with Conductor): search, artists and album pages show it (⬇); playing it
+  fetches it into the Temporary playlist for a while, and hearting it keeps it for good.
+- **Sounds even:** songs play at the same loudness (ReplayGain, by track or by album); with Conductor also the songs
+  whose files don't say how loud they are, which the server measures itself.
 - **Together:** listen with friends (Ensemble), edit playlists together (Chorus), control your other devices, cast to speakers and TVs.
 - **Dark by default**, with a light theme, Material You colours, and full screen-reader support.
 
@@ -39,7 +42,8 @@ Download an APK from the [latest release](../../releases/latest):
 
 Open it and allow installing from your browser or file manager (Android 8.0 or newer). Every release is signed with
 the same key, so new versions install over old ones and keep your data. Encore checks for new versions about twice
-a day (you can turn this off) and checks each download against the release's `SHA256SUMS.txt`.
+a day (you can turn this off, or use Settings › Check now); Update downloads the new version, checks it against the
+release's `SHA256SUMS.txt` and hands it to Android's installer.
 
 Sign in with your server's address (e.g. `https://music.example.com`), user name and password. The password stays in
 Android's encrypted storage. Add more servers in Settings; each keeps its own downloads, queue and pins.
@@ -58,9 +62,10 @@ The Linux and Windows app lives in its own repository: **[encore-desktop](https:
 Encore plays from any Subsonic / OpenSubsonic server, such as [Navidrome](https://www.navidrome.org). Browsing,
 playback, downloads, lyrics, playlists and favourites all work there.
 
-[**Conductor**](https://github.com/d-safro/conductor) is the server made for Encore. It adds:
+[**Conductor**](https://github.com/d-safro/conductor) is the server made for Encore (1.0 or newer). It adds:
 - music you don't have yet, and getting it;
-- your mixes;
+- Made for you and your mixes, without any AI to set up;
+- sound levelling for songs without loudness tags;
 - concerts near you;
 - listening stats and the year in review;
 - Ensemble and Chorus;
@@ -120,7 +125,7 @@ is in [encore-core](https://github.com/d-safro/encore-core), the `encore_core` p
   encore_core:
     git:
       url: https://github.com/d-safro/encore-core.git
-      ref: v1.0.0
+      ref: v1.6.1
 ```
 
 CI and release builds use that tag. To work on the shared code next to this app, clone both side by side
