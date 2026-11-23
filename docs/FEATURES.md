@@ -8,6 +8,10 @@ as the server; with plain Navidrome they just don't appear.
 - Home: greeting, quick pills (shuffle all, liked songs, made for you, continue from another device),
   "Jump back in", recently added, most played, favourites, something different, top rated, your playlists
   (choose and order the sections).
+- Now playing elsewhere (Home): what your other devices are playing right now and, when the server shares it,
+  what other people on it are listening to; tap one to see the song, play it here (from one of your devices it
+  carries on from where it is and pauses there), play it next, control that device, or go to its album or artist.
+  Live with Conductor's event stream, else looked at every 90 seconds; hidden when nothing plays elsewhere.
 - Library: Liked songs pinned on top like a playlist, plus your own pinned playlists and albums (long-press → Pin).
 - Library tabs: playlists, albums (grid or list, sort orders, endless scrolling), artists, songs, liked songs,
   genres; folder browsing; internet radio stations from the server.
