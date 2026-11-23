@@ -8,6 +8,8 @@ interface RemoteTarget {
     suspend fun next()
     suspend fun previous()
     suspend fun seekTo(positionMs: Long)
+    /** Skip back or [forward] by the phone's own seconds. */
+    suspend fun skipBy(forward: Boolean)
     suspend fun changeVolume(steps: Int)
     suspend fun setVolume(level: Int)
     suspend fun toggleHeart()
@@ -40,6 +42,7 @@ object RemoteDispatcher {
                 Command.Next -> target.next()
                 Command.Previous -> target.previous()
                 is Command.SeekTo -> target.seekTo(command.positionMs.coerceAtLeast(0))
+                is Command.SkipBy -> target.skipBy(command.forward)
                 is Command.ChangeVolume -> target.changeVolume(command.steps)
                 is Command.SetVolume -> target.setVolume(command.level.coerceAtLeast(0))
                 Command.ToggleHeart -> target.toggleHeart()

@@ -12,7 +12,7 @@ class WireTest {
     @Test fun commandsRoundTrip() {
         val all = listOf(
             Command.Subscribe(60), Command.State, Command.Play, Command.Pause, Command.TogglePlay, Command.Next,
-            Command.Previous, Command.SeekTo(12_345), Command.ChangeVolume(-2), Command.SetVolume(7),
+            Command.Previous, Command.SeekTo(12_345), Command.SkipBy(true), Command.SkipBy(false), Command.ChangeVolume(-2), Command.SetVolume(7),
             Command.ToggleHeart, Command.Queue, Command.SkipTo(4), Command.Browse("pl:abc"),
             Command.PlayItem("album:1"), Command.PlaySearch("blue train"),
         )
@@ -23,6 +23,7 @@ class WireTest {
         // the phone and watch may be on different versions: these strings are the contract
         assertEquals("""{"type":"seek","positionMs":5000}""", Wire.encode(Command.SeekTo(5000)).decodeToString())
         assertEquals("""{"type":"heart"}""", Wire.encode(Command.ToggleHeart).decodeToString())
+        assertEquals("""{"type":"skipBy","forward":true}""", Wire.encode(Command.SkipBy(true)).decodeToString())
         assertEquals(Command.Browse(""), Wire.decodeCommand("""{"type":"browse"}""".encodeToByteArray()))
     }
 
@@ -91,6 +92,7 @@ class DispatcherTest {
         override suspend fun next() { calls += "next" }
         override suspend fun previous() { calls += "previous" }
         override suspend fun seekTo(positionMs: Long) { calls += "seek $positionMs" }
+        override suspend fun skipBy(forward: Boolean) { calls += if (forward) "skip forward" else "skip back" }
         override suspend fun changeVolume(steps: Int) { calls += "volume $steps" }
         override suspend fun setVolume(level: Int) { calls += "setVolume $level" }
         override suspend fun toggleHeart() { calls += "heart"; np = np.copy(starred = !np.starred) }
@@ -148,5 +150,40 @@ class DispatcherTest {
         assertTrue(ask(f, null) is Reply.Error)
         val bytes = RemoteDispatcher.handle("w", """{"type":"teleport"}""".encodeToByteArray(), f)
         assertTrue(Wire.decodeReply(bytes) is Reply.Error)
+    }
+
+    @Test fun skipBySecondsReachesThePlayer() = runTest {
+        val f = Fake()
+        ask(f, Command.SkipBy(forward = false))
+        ask(f, Command.SkipBy(forward = true))
+        assertEquals(listOf("skip back", "skip forward"), f.calls)
+    }
+
+    @Test fun skipSecondsInTheStateAndOlderSidesStillUnderstandEachOther() {
+        // (an older watch reads this state too: unknown fields are ignored, see newerFieldsAreIgnored; an older
+        // phone answers an unknown command with an error, see failuresBecomeErrors)
+        val n = NowPlaying(title = "Episode 12", skipBackSeconds = 15, skipForwardSeconds = 30, spoken = true)
+        val back = Wire.decodeNowPlaying(Wire.encode(n))!!
+        assertEquals(n, back)
+        assertTrue(back.canSkip)
+        // an older phone's state: no skip buttons (the watch never sends SkipBy to it)
+        val old = Wire.decodeNowPlaying("""{"title":"So What","playing":true}""".encodeToByteArray())!!
+        assertFalse(old.canSkip)
+        assertFalse(old.spoken)
+    }
+
+    @Test fun thePhonesSkipSettings() {
+        // nothing saved yet: Encore's defaults
+        assertEquals(15 to 30, SkipSettings.of(null, "song1"))
+        assertEquals(15 to 30, SkipSettings.of("not json", "song1"))
+        val s = """{"skipBack":10,"skipForward":60,"skipButtons":"everything","speed":1.0}"""
+        assertEquals(10 to 60, SkipSettings.of(s, "song1"))
+        assertEquals(0 to 0, SkipSettings.of(s, "radio-abc")) // nothing to skip in a live stream
+        assertEquals(0 to 0, SkipSettings.of(s, ""))
+        val spokenOnly = """{"skipBack":5,"skipForward":7,"skipButtons":"spoken"}"""
+        assertEquals(0 to 0, SkipSettings.of(spokenOnly, "song1"))
+        assertEquals(5 to 30, SkipSettings.of(spokenOnly, "pe-1")) // 7 isn't on offer: the default
+        assertTrue(SkipSettings.isSpoken("ab-book-2"))
+        assertFalse(SkipSettings.isSpoken("song1"))
     }
 }
