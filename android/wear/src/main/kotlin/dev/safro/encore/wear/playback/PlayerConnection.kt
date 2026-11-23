@@ -115,5 +115,11 @@ class PlayerConnection(private val context: Context, private val scope: Coroutin
     fun next() = with { it.seekToNextMediaItem() }
     fun previous() = with { it.seekToPrevious() }
     fun seekTo(ms: Long) = with { it.seekTo(ms) }
+    fun skipBy(ms: Long) = with {
+        when (val to = skipTarget(it.currentPosition.coerceAtLeast(0), ms, it.duration.coerceAtLeast(0), it.hasNextMediaItem())) {
+            null -> it.seekToNextMediaItem()
+            else -> it.seekTo(to)
+        }
+    }
     fun skipTo(index: Int) = with { it.seekTo(index, 0) }
 }

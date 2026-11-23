@@ -141,6 +141,15 @@ abstract class ScreenshotTest(private val shape: String) {
         )
     }
 
+    // a podcast episode: skip back / forward in previous / next's place (held: previous / next)
+    @Test fun remoteEpisode() = shot("remote_episode") {
+        PlayerScreen(
+            NowPlayingUi(title = "Episode 112: Blue Notes", artist = "Jazz Hour", coverArt = "al-2", playing = true,
+                progress = 0.3f, onPhone = true, skipBackSeconds = 15, skipForwardSeconds = 30, spoken = true),
+            phoneActions.let { PlayerActions(onQueue = it.onQueue, onLibrary = it.onLibrary, onSkip = {}) },
+        )
+    }
+
     @Test fun remoteNotConnected() = shot("remote_offline") {
         PlayerScreen(NowPlayingUi(onPhone = true, message = "Phone not connected"), phoneActions)
     }

@@ -108,3 +108,17 @@ class SongResolverTest {
         assertEquals(listOf(Triple("s-2", "raw", 0), Triple("s-2", "opus", 96), Triple("s-2", "opus", 96)), asked)
     }
 }
+
+class SkipTest {
+    @Test fun neverBeforeTheStart() {
+        assertEquals(0L, skipTarget(5_000, -15_000, 180_000, hasNext = true))
+        assertEquals(45_000L, skipTarget(60_000, -15_000, 180_000, hasNext = true))
+    }
+
+    @Test fun pastTheEndTheNextSongOrTheVeryEnd() {
+        assertEquals(90_000L, skipTarget(60_000, 30_000, 180_000, hasNext = true))
+        assertNull(skipTarget(170_000, 30_000, 180_000, hasNext = true))
+        assertEquals(180_000L, skipTarget(170_000, 30_000, 180_000, hasNext = false))
+        assertEquals(90_000L, skipTarget(60_000, 30_000, 0, hasNext = true)) // length not known yet
+    }
+}
