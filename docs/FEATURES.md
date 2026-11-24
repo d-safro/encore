@@ -163,6 +163,7 @@ as the server; with plain Navidrome they just don't appear.
   Title" lines. Each song is looked for on your server; ones you don't have can be got, then the playlist is made.
 - Don't suggest this song / Don't suggest <artist> (a song's menu): left out of autoplay, smart shuffle, radio,
   instant mixes and the weekly mixes, still played when you pick them; undo in Settings › Not suggested. Synced.
+- Remove from library… (a song's menu; admins, needs Conductor 1.7): deletes the song from your server for good, with every other copy of it in any library. It first shows each file that goes and asks you to tick "I understand" before Remove permanently works. It leaves every playlist and queue, every device drops its download, and it isn't downloaded again.
 - Invite to edit (a playlist's menu): a link like Jam's lets friends add songs from your library to that playlist
   on a web page, and take out the ones they added; it works until you stop it (or 30 days).
 - Private session (Settings, or the devices sheet in the player): for up to 6 hours nothing you play is
